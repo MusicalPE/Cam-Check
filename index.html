@@ -144,6 +144,10 @@ li:hover .pen{opacity:.9}
 .qedit .qsave,.qbtns .qsave{background:var(--accent);border-color:var(--accent);color:var(--on-forest)}
 .qedit .qdel{color:var(--danger)}
 .qzone{display:flex;flex-direction:column;gap:6px}
+.qmove{display:inline-flex;gap:4px}
+.qmove button{font-size:12px;line-height:1;width:34px;height:30px;padding:0;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.qmove button:hover{border-color:var(--accent);color:var(--accent)}
+.qzsel{font:inherit;font-size:12px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 6px;max-width:100%;min-width:0}
 .qbtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .qzone .confirm{font-size:12px;color:var(--muted)}
 .list-foot{text-align:right;margin-top:-8px}
@@ -483,6 +487,8 @@ function itemRow(z, i){
       <input class="qinput" id="q-${i.id}" value="${esc(i.t)}" aria-label="항목 이름 고치기">
       <button type="submit" class="qsave">저장</button>
       <div class="qlabels"><span>상황</span>${labelToggles(z, i)}</div>
+      <div class="qlabels qplace"><span>순서</span><span class="qmove"><button type="button" class="qup" data-z="${z.id}" data-i="${i.id}" aria-label="위로 옮기기" title="위로">▲</button><button type="button" class="qdown" data-z="${z.id}" data-i="${i.id}" aria-label="아래로 옮기기" title="아래로">▼</button></span>
+        <select class="qzsel" data-z="${z.id}" data-i="${i.id}" aria-label="다른 구역으로 옮기기">${state.zones.map(x => `<option value="${x.id}" ${x.id===z.id?"selected":""}>${x.id===z.id?"구역: ":"→ "}${esc(x.name)}</option>`).join("")}</select></div>
       <button type="button" class="qdel" data-z="${z.id}" data-i="${i.id}">빼기</button>
       <button type="button" class="qcancel" aria-label="고치기 취소">취소</button></form></li>`;
   }
@@ -503,6 +509,7 @@ function zoneView(z){
         <input class="zsub" id="qs-${z.id}" value="${esc(z.sub||"")}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
         <div class="qlabels"><span>구역 전체 상황</span>${labelToggles(z)}</div>
         <div class="qbtns"><button type="submit" class="qsave">저장</button><button type="button" class="qcancel">취소</button>
+          <span class="qlabels" style="width:auto"><span>구역 순서</span><span class="qmove"><button type="button" class="qup" data-z="${z.id}"  aria-label="위로 옮기기" title="위로">▲</button><button type="button" class="qdown" data-z="${z.id}"  aria-label="아래로 옮기기" title="아래로">▼</button></span></span>
           <span class="spacer"></span><span id="zd-${z.id}"><button type="button" class="link warn zdel" data-z="${z.id}">구역 삭제</button></span></div></form>`
     : `<div class="zone-head"><div><h2>${esc(z.name)}${badges(z.g, "ztag")}<button class="pen pen-z" data-z="${z.id}" aria-label="${esc(z.name)} 구역 이름 고치기" title="구역 이름 고치기">${PENCIL}</button></h2>${z.sub?`<div class="sub">${esc(z.sub)}</div>`:""}</div>
       <div class="cnt">${full?"다 챙김 ":""}${k} / ${n}</div></div>`;
@@ -538,10 +545,45 @@ function render(){
 }
 function findZone(id){ return state.zones.find(z => z.id === id); }
 
+/* ---------- 순서 옮기기 (지금 화면에 보이는 것 기준으로 한 칸씩) ---------- */
+function keepTyped(){
+  const f = document.querySelector(".qedit, .qzone"); if (!f) return;
+  const z = findZone(f.dataset.z); if (!z) return;
+  if (f.classList.contains("qedit")){ const it = z.items.find(i => i.id === f.dataset.i), v = f.querySelector(".qinput").value.trim(); if (it && v) it.t = v; }
+  else { const n = f.querySelector(".zname").value.trim(); if (n) z.name = n; z.sub = f.querySelector(".zsub").value.trim(); }
+}
+function shiftIn(arr, thing, seen, dir){
+  const pos = seen.indexOf(thing), nb = seen[pos + dir];
+  if (pos < 0 || !nb) return false;
+  arr.splice(arr.indexOf(thing), 1);
+  const at = arr.indexOf(nb);
+  arr.splice(dir < 0 ? at : at + 1, 0, thing);
+  return true;
+}
+function moveThing(zid, iid, dir){
+  keepTyped();
+  const z = findZone(zid);
+  const moved = iid
+    ? shiftIn(z.items, z.items.find(i => i.id === iid), shownItems(z) || [], dir)
+    : shiftIn(state.zones, z, state.zones.filter(x => shownItems(x)), dir);
+  if (moved) save();
+  render();
+  const b = document.querySelector(`.${dir < 0 ? "qup" : "qdown"}[data-z="${zid}"]${iid ? `[data-i="${iid}"]` : ""}`);
+  if (b){ b.focus(); b.closest("section").scrollIntoView && b.closest("section").scrollIntoView({block:"nearest"}); }
+}
+
 /* ---------- 체크리스트 동작 ---------- */
 const grid = document.getElementById("grid");
 grid.addEventListener("change", e => {
   const t = e.target;
+  if (t.classList.contains("qzsel")){
+    keepTyped();
+    const from = findZone(t.dataset.z), to = findZone(t.value), it = from.items.find(i => i.id === t.dataset.i);
+    if (to && it && to !== from){ from.items = from.items.filter(i => i !== it); to.items.push(it); save(); quick = {type:"item", id:it.id}; }
+    render();
+    const el = document.getElementById("q-"+t.dataset.i); if (el){ el.focus(); el.closest("section").scrollIntoView && el.closest("section").scrollIntoView({block:"nearest"}); }
+    return;
+  }
   if (t.type === "checkbox" && t.dataset.i){
     if (t.checked) state.checked[t.dataset.i] = 1; else delete state.checked[t.dataset.i];
     setCheck(t.dataset.i, t.checked); render();
@@ -560,6 +602,7 @@ grid.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
   if (t.classList.contains("pen")){ e.preventDefault(); openQuick(t.dataset.i ? "item" : "zone", t.dataset.i || t.dataset.z); return; }
   if (t.classList.contains("qcancel")){ closeQuick(); return; }
+  if (t.classList.contains("qup") || t.classList.contains("qdown")){ moveThing(t.dataset.z, t.dataset.i, t.classList.contains("qup") ? -1 : 1); return; }
   if (t.classList.contains("qdel")){
     const qz = findZone(t.dataset.z);
     qz.items = qz.items.filter(i => i.id !== t.dataset.i);
