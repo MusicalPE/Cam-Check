@@ -620,6 +620,10 @@ document.getElementById("connBtn").addEventListener("click", () => {
 document.getElementById("connSave").addEventListener("click", () => {
   const api = document.getElementById("connApi").value.trim(), key = document.getElementById("connKey").value;
   connMsg.className = "msg";
+  if (/script\.googleusercontent\.com/.test(api)){
+    connMsg.className = "msg err";
+    connMsg.textContent = "이 주소는 웹 앱을 브라우저로 열었을 때 바뀐 임시 주소예요. Apps Script의 [배포] > [배포 관리]에서 /exec 로 끝나는 웹 앱 주소를 복사해 넣어 주세요."; return;
+  }
   if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(api)){
     connMsg.className = "msg err"; connMsg.textContent = "웹 앱 주소는 https://script.google.com/ 으로 시작하고 /exec 로 끝나야 해요."; return;
   }
