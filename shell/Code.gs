@@ -12,8 +12,26 @@ const SHEET_RECORD = '캠핑기록';
 const SHEET_SETTING = '설정';
 const HEADER = ['출발일', '박', '캠핑장', '최저기온', '메모', '챙긴 수', '전체 수', '챙긴 항목', '안 챙긴 항목', '저장 시각', '기록ID'];
 
+const APP_URL = 'https://musicalpe.github.io/camping/';
+
+/** 웹 앱 주소(/exec)를 열면 GitHub 화면으로 넘어가면서 이 시트와 자동으로 연결 */
 function doGet() {
-  return json_({ ok: true, msg: '캠핑 체크리스트 시트 연결 주소입니다. 이 주소를 화면의 연결 설정에 넣으세요.' });
+  const url = APP_URL + '?api=' + encodeURIComponent(ScriptApp.getService().getUrl()) +
+    '&key=' + encodeURIComponent(SECRET);
+  const safe = url.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+  const html =
+    '<!doctype html><html><head><meta charset="utf-8">' +
+    '<meta name="viewport" content="width=device-width,initial-scale=1">' +
+    '<style>body{font-family:sans-serif;background:#ECEEE8;color:#1C201C;display:grid;place-items:center;min-height:90vh;margin:0;text-align:center}' +
+    'a{display:inline-block;margin-top:14px;background:#2F4A36;color:#fff;padding:12px 20px;border-radius:10px;text-decoration:none;font-weight:600}</style>' +
+    '</head><body><div><div>캠핑 체크리스트를 여는 중…</div>' +
+    '<a href="' + safe + '" target="_top">바로 열기</a></div>' +
+    '<script>try{window.top.location.href=' + JSON.stringify(url) + ';}catch(e){}</script>' +
+    '</body></html>';
+  return HtmlService.createHtmlOutput(html)
+    .setTitle('캠핑 준비물 체크리스트')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function doPost(e) {
