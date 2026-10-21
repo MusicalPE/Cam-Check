@@ -160,6 +160,8 @@ ul.items{min-height:6px}
 .drag-chosen{background:var(--surface)}
 .sortable-fallback{box-shadow:0 10px 26px rgba(0,0,0,.18);border-radius:10px;background:var(--surface);list-style:none}
 .qmove{display:inline-flex;gap:4px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:60;max-width:min(92vw,440px);
+  background:var(--forest);color:var(--on-forest);font-size:14px;line-height:1.45;padding:12px 16px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.25);text-align:center}
 .qmove button{font-size:12px;line-height:1;width:34px;height:30px;padding:0;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 .qmove button:hover{border-color:var(--accent);color:var(--accent)}
 .qzsel{font:inherit;font-size:12px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:5px 6px;max-width:100%;min-width:0}
@@ -479,13 +481,14 @@ function setSync(text, cls){ const el = document.getElementById("sync"); el.text
 const findLabel = id => state.labels.find(l => l.id === id);
 const labelOn = id => { const l = findLabel(id); return !l || l.on !== false; };
 const visible = g => !g || !g.length || g.some(labelOn);   // 붙은 상황 중 하나라도 켜져 있으면 보임
+const editingNow = (type, id) => quick && quick.type === type && quick.id === id;
 function shownItems(z){
-  if (!visible(z.g)) return null;
-  return z.items.filter(it => visible(it.g));
+  if (!visible(z.g) && !editingNow("zone", z.id) && !z.items.some(i => editingNow("item", i.id))) return null;
+  return z.items.filter(it => visible(it.g) || editingNow("item", it.id));   // 고치는 중인 것은 저장 전까지 그대로 보임
 }
 const badges = (g, cls) => (g||[]).map(findLabel).filter(Boolean).map(l => `<span class="${cls}">${esc(l.name)}</span>`).join("");
 const labelToggles = (z, i) => state.labels.map(l => {
-  const on = ((i || z).g || []).includes(l.id);
+  const on = ((quick && quick.g) || (i || z).g || []).includes(l.id);
   return `<button type="button" class="ctog" data-z="${z.id}" ${i?`data-i="${i.id}"`:""} data-l="${l.id}" aria-pressed="${on}">${esc(l.name)}</button>`;
 }).join("");
 function countAll(){
@@ -502,7 +505,7 @@ const TRASH = '<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true
 function itemRow(z, i){
   if (quick && quick.type === "item" && quick.id === i.id){
     return `<li class="qrow"><form class="qedit" data-z="${z.id}" data-i="${i.id}">
-      <input class="qinput" id="q-${i.id}" value="${esc(i.t)}" aria-label="항목 이름 고치기">
+      <input class="qinput" id="q-${i.id}" value="${esc(quick.t ?? i.t)}" aria-label="항목 이름 고치기">
       <button type="submit" class="qsave">저장</button>
       <div class="qlabels"><span>상황</span>${labelToggles(z, i)}</div>
       <div class="qlabels qplace"><span>구역 옮기기</span>
@@ -528,8 +531,8 @@ function zoneView(z){
   const full = n && k === n;
   const head = quick && quick.type === "zone" && quick.id === z.id
     ? `<form class="qzone" data-z="${z.id}">
-        <input class="zname" id="qz-${z.id}" value="${esc(z.name)}" placeholder="구역 이름" aria-label="구역 이름">
-        <input class="zsub" id="qs-${z.id}" value="${esc(z.sub||"")}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
+        <input class="zname" id="qz-${z.id}" value="${esc(quick.name ?? z.name)}" placeholder="구역 이름" aria-label="구역 이름">
+        <input class="zsub" id="qs-${z.id}" value="${esc(quick.sub ?? (z.sub||""))}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
         <div class="qlabels"><span>구역 전체 상황</span>${labelToggles(z)}</div>
         <div class="qbtns"><button type="submit" class="qsave">저장</button><button type="button" class="qcancel">취소</button>
           <span class="spacer"></span><span id="zd-${z.id}"><button type="button" class="link warn zdel" data-z="${z.id}">구역 삭제</button></span></div></form>`
@@ -544,7 +547,8 @@ function zoneView(z){
   </section>`;
 }
 function openQuick(type, id){
-  quick = {type, id}; render();
+  const target = type === "item" ? state.zones.flatMap(z => z.items).find(i => i.id === id) : findZone(id);
+  quick = {type, id, g:((target && target.g) || []).slice()}; render();   // 상황은 저장을 눌러야 반영
   const el = document.getElementById((type === "item" ? "q-" : "qz-") + id);
   if (el){ el.focus(); el.select(); }
 }
@@ -567,6 +571,15 @@ function render(){
   renderChips();
 }
 function findZone(id){ return state.zones.find(z => z.id === id); }
+
+/* 잠깐 떴다 사라지는 안내 */
+let toastTimer = null;
+function toast(text){
+  let el = document.getElementById("toast");
+  if (!el){ el = document.createElement("div"); el.id = "toast"; el.className = "toast"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  el.textContent = text; el.hidden = false;
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => { el.hidden = true; }, 4000);
+}
 
 /* ---------- 순서 옮기기 (지금 화면에 보이는 것 기준으로 한 칸씩) ---------- */
 function keepTyped(){
@@ -646,7 +659,7 @@ grid.addEventListener("change", e => {
   if (t.classList.contains("qzsel")){
     keepTyped();
     const from = findZone(t.dataset.z), to = findZone(t.value), it = from.items.find(i => i.id === t.dataset.i);
-    if (to && it && to !== from){ from.items = from.items.filter(i => i !== it); to.items.push(it); save(); quick = {type:"item", id:it.id}; }
+    if (to && it && to !== from){ from.items = from.items.filter(i => i !== it); to.items.push(it); save(); quick = Object.assign({}, quick, {type:"item", id:it.id}); }
     render();
     const el = document.getElementById("q-"+t.dataset.i); if (el){ el.focus(); el.closest("section").scrollIntoView && el.closest("section").scrollIntoView({block:"nearest"}); }
     return;
@@ -693,7 +706,12 @@ grid.addEventListener("click", e => {
   if (t.classList.contains("del")){
     z.items = z.items.filter(i => i.id !== t.dataset.i); delete state.checked[t.dataset.i]; save(); render();
   } else if (t.classList.contains("ctog")){
-    const target = t.dataset.i ? z.items.find(i => i.id === t.dataset.i) : z, l = t.dataset.l;
+    const l = t.dataset.l;
+    if (quick && quick.g){
+      const qi = document.querySelector(".qinput"), qn = document.querySelector(".qzone .zname"), qs = document.querySelector(".qzone .zsub");
+      if (qi) quick.t = qi.value; if (qn) quick.name = qn.value; if (qs) quick.sub = qs.value;   // 쓰던 글자 지키기
+      quick.g = quick.g.includes(l) ? quick.g.filter(x => x !== l) : quick.g.concat(l); render(); return; }
+    const target = t.dataset.i ? z.items.find(i => i.id === t.dataset.i) : z;
     target.g = target.g.includes(l) ? target.g.filter(x => x !== l) : target.g.concat(l);
     save(); render();
   } else if (t.classList.contains("zdel")){
@@ -715,15 +733,20 @@ grid.addEventListener("submit", e => {
   if (f.classList.contains("qedit")){
     const it = findZone(f.dataset.z).items.find(i => i.id === f.dataset.i), v = f.querySelector("input").value.trim();
     if (it && v) it.t = v;
+    if (it && quick && quick.g) it.g = quick.g.slice();
     quick = null; save(); render();
-    const el = document.getElementById("c-"+f.dataset.i); if (el) el.focus();
+    const el = document.getElementById("c-"+f.dataset.i);
+    if (el) el.focus(); else if (it) toast(`"${it.t}"은(는) 지금 꺼진 상황이라 숨겨졌어요. 위에서 그 상황을 켜면 보여요.`);
     return;
   }
   if (f.classList.contains("qzone")){
     const qz = findZone(f.dataset.z), name = f.querySelector(".zname").value.trim();
     if (name) qz.name = name;
     qz.sub = f.querySelector(".zsub").value.trim();
-    quick = null; save(); render(); return;
+    if (quick && quick.g) qz.g = quick.g.slice();
+    quick = null; save(); render();
+    if (!visible(qz.g)) toast(`"${qz.name}" 구역은 지금 꺼진 상황이라 숨겨졌어요. 위에서 그 상황을 켜면 보여요.`);
+    return;
   }
   const z = findZone(f.dataset.z), inp = f.querySelector("input"), v = inp.value.trim();
   if (!z || !v) return;
