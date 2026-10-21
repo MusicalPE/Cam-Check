@@ -14,7 +14,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: 숲 속 사이트 안내판 느낌 — 상단 여행 정보 + 전체 진행 막대, 구역별 카드 격자, 맨 아래 날짜별 캠핑 기록 */
 :root{
@@ -53,7 +53,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 .qr-modal{position:fixed;inset:0;z-index:50;background:rgba(10,14,10,.55);display:grid;place-items:center;
   padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
 .qr-card{background:var(--surface);color:var(--ink);border-radius:18px;padding:22px;width:min(360px,100%);display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
-.qr-card h3{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;color:var(--forest)}
+.qr-card h3{font-family:var(--f-body);font-weight:700;font-size:20px;margin:0;color:var(--forest)}
 .qr-card p{margin:0;font-size:13px;color:var(--muted)}
 .qr-box{background:#fff;border-radius:12px;padding:12px;width:min(260px,100%)}
 .qr-box svg,.qr-box img{display:block;width:100%;height:auto}
@@ -76,7 +76,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 .chip.ghost[aria-expanded="true"]{border-style:solid;border-color:var(--accent);color:var(--accent)}
 .labels-panel{background:var(--surface);border:1.5px dashed var(--accent);border-radius:14px;padding:16px 18px;display:flex;flex-direction:column;gap:10px}
 .lp-head{display:flex;justify-content:space-between;align-items:baseline}
-.labels-panel h3{font-family:var(--f-display);font-weight:400;font-size:20px;margin:0;color:var(--forest)}
+.labels-panel h3{font-family:var(--f-body);font-weight:700;font-size:18px;margin:0;color:var(--forest)}
 .labels-panel p{margin:0;font-size:13px;color:var(--muted)}
 .lp-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .lp-list li{gap:10px}
@@ -98,7 +98,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 .zone{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;display:flex;flex-direction:column;gap:12px;min-width:0}
 .zone-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .zone-head > div{min-width:0}
-.zone h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;overflow-wrap:anywhere}
+.zone h2{font-family:var(--f-body);font-weight:700;font-size:20px;letter-spacing:-.01em;margin:0;overflow-wrap:anywhere}
 .zone .sub{font-size:12px;color:var(--muted);margin-top:2px}
 .zone .cnt{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
 .zone.complete .cnt{color:var(--forest)}
@@ -107,7 +107,7 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 .ztag{font-size:11px;font-weight:600;color:var(--forest);border:1px solid var(--forest);border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:3px;font-family:var(--f-body);white-space:nowrap}
 
 .zedit{display:flex;flex-direction:column;gap:6px}
-.zname{font-family:var(--f-display);font-size:21px;border:none;border-bottom:1.5px solid var(--line);background:transparent;padding:2px 0;width:100%}
+.zname{font-family:var(--f-body);font-weight:700;font-size:19px;border:none;border-bottom:1.5px solid var(--line);background:transparent;padding:2px 0;width:100%}
 .zsub{font-size:13px;border:none;border-bottom:1px solid var(--line);background:transparent;padding:2px 0;color:var(--muted);width:100%}
 .zname:focus,.zsub:focus,.iname:focus{border-color:var(--accent);outline:none}
 
@@ -209,7 +209,7 @@ ul.items{min-height:6px}
 
 .sync-row{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
 .conn{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;max-width:640px}
-.conn h3{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;color:var(--forest)}
+.conn h3{font-family:var(--f-body);font-weight:700;font-size:19px;margin:0;color:var(--forest)}
 .conn p{margin:0;font-size:13px;color:var(--muted)}
 .conn label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
 .conn .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
