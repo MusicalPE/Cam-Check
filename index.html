@@ -121,6 +121,8 @@ li:hover .pen{opacity:.9}
 .qbtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
 .qzone .confirm{font-size:12px;color:var(--muted)}
 .list-foot{text-align:right;margin-top:-8px}
+.conn-foot{text-align:center;margin-top:-6px}
+.conn-foot .link{font-size:12px;opacity:.8}
 .qadd input{font-size:13px;padding:6px 10px}
 .qadd button{font-size:12px}
 .add{display:flex;gap:6px}
@@ -228,7 +230,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
   <section class="log" aria-labelledby="logTitle">
     <div>
       <h2 id="logTitle">캠핑 기록</h2>
-      <div class="sync-row"><span class="sync" id="sync">불러오는 중…</span><button class="link" id="connBtn">시트 연결 설정</button></div>
+      <div class="sync-row"><span class="sync" id="sync">불러오는 중…</span></div>
       <div class="stats" id="stats"></div>
       <div class="log-form">
         <textarea id="memo" placeholder="한 줄 메모: 날씨, 좋았던 점, 다음에 챙길 것"></textarea>
@@ -252,6 +254,8 @@ footer{font-size:12px;color:var(--muted);text-align:center}
       <div class="row"><input class="field" id="shareLink" readonly aria-label="연결 링크"><button class="chip" id="copyShare">링크 복사</button></div>
     </div>
   </section>
+
+  <div class="conn-foot"><button class="link" id="connBtn" hidden>연결 주소 변경</button></div>
 
   <footer id="foot">Made by 음악적체육인</footer>
 </div>
@@ -674,11 +678,18 @@ function updateConnUI(){
   document.getElementById("connKey").value = conn.key || "";
   document.getElementById("shareBox").hidden = !SHEET;
   if (SHEET) document.getElementById("shareLink").value = shareLink();
-  document.getElementById("connBtn").textContent = SHEET ? "시트 연결 설정" : "시트 연결하기";
+  const cb = document.getElementById("connBtn");
+  cb.hidden = !SHEET;
+  cb.textContent = connEl.hidden ? "연결 주소 변경" : "연결 창 닫기";
+}
+/* 연결돼 있으면 연결 창은 숨기고, 아래 작은 글씨로만 열 수 있게. 연결 전에는 늘 보이게 */
+function showConn(open){
+  connEl.hidden = SHEET ? !open : false;
+  updateConnUI();
 }
 document.getElementById("connBtn").addEventListener("click", () => {
-  connEl.hidden = !connEl.hidden;
-  if (!connEl.hidden){ updateConnUI(); connEl.scrollIntoView({behavior:"smooth", block:"start"}); document.getElementById("connApi").focus(); }
+  showConn(connEl.hidden);
+  if (!connEl.hidden){ connMsg.textContent = ""; connEl.scrollIntoView({behavior:"smooth", block:"start"}); }
 });
 document.getElementById("connSave").addEventListener("click", () => {
   let api = document.getElementById("connApi").value.trim(), key = document.getElementById("connKey").value;
@@ -698,8 +709,8 @@ document.getElementById("connSave").addEventListener("click", () => {
   conn = {api, key}; btn.disabled = true; connMsg.textContent = "연결해 보는 중…";
   req("get").then(() => {
     lsSet(CKEY, JSON.stringify(conn)); SHEET = true;
-    connMsg.className = "msg"; connMsg.textContent = "연결됐어요. 이제 이 기기도 시트에 함께 저장돼요.";
-    updateConnUI(); return load(true);
+    connMsg.className = "msg"; connMsg.textContent = "";
+    showConn(false); return load(true);
   }).catch(err => {
     conn = before;
     connMsg.className = "msg err"; connMsg.textContent = "연결하지 못했어요. " + (err && err.message || "주소와 배포 설정(액세스: 모든 사용자)을 확인해 주세요.");
@@ -708,7 +719,7 @@ document.getElementById("connSave").addEventListener("click", () => {
 document.getElementById("connOff").addEventListener("click", () => {
   conn = {}; SHEET = false; lsSet(CKEY, "{}");
   connMsg.className = "msg"; connMsg.textContent = "연결을 끊었어요. 이제 이 기기에만 저장돼요.";
-  updateConnUI(); setSync("시트에 연결하지 않아 이 기기에만 저장돼요.");
+  showConn(true); setSync("시트에 연결하지 않아 이 기기에만 저장돼요.");
 });
 document.getElementById("copyShare").addEventListener("click", () => {
   const inp = document.getElementById("shareLink");
@@ -754,7 +765,7 @@ if (STANDALONE && !SHEET){
 }
 
 /* ---------- 시작 ---------- */
-fillTrip(); render(); updateConnUI();
+fillTrip(); render(); showConn(false);
 setSync(SHEET ? "구글 시트에서 불러오는 중…" : "시트에 연결하지 않아 이 기기에만 저장돼요.");
 load(true).catch(err => {
   renderRecords();
