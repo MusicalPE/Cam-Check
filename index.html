@@ -71,7 +71,6 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;align-items:start}
 .zone{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;display:flex;flex-direction:column;gap:12px;min-width:0}
-.editing .zone{border-style:dashed;border-color:var(--accent)}
 .zone-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
 .zone-head > div{min-width:0}
 .zone h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;overflow-wrap:anywhere}
@@ -119,7 +118,9 @@ li:hover .pen{opacity:.9}
 .qedit .qsave,.qbtns .qsave{background:var(--accent);border-color:var(--accent);color:var(--on-forest)}
 .qedit .qdel{color:var(--danger)}
 .qzone{display:flex;flex-direction:column;gap:6px}
-.qbtns{display:flex;gap:6px}
+.qbtns{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.qzone .confirm{font-size:12px;color:var(--muted)}
+.list-foot{text-align:right;margin-top:-8px}
 .qadd input{font-size:13px;padding:6px 10px}
 .qadd button{font-size:12px}
 .add{display:flex;gap:6px}
@@ -219,15 +220,10 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     <button class="chip" id="fHide" aria-pressed="false">챙긴 것 숨기기</button>
     <span class="spacer"></span>
     <span id="resetBox"></span>
-    <button class="edit-btn" id="editBtn" aria-pressed="false">목록 편집</button>
-  </div>
-
-  <div class="edit-note" id="editNote" hidden>
-    <span>구역 이름과 설명, 항목 이름을 눌러 바로 고칠 수 있어요. ×로 빼고, 아래 칸에서 넣어요.</span>
-    <span id="defaultBox"></span>
   </div>
 
   <main class="grid" id="grid"></main>
+  <div class="list-foot"><span id="defaultBox"></span></div>
 
   <section class="log" aria-labelledby="logTitle">
     <div>
@@ -352,7 +348,7 @@ function track(p, okText){
 
 /* ---------- 상태 ---------- */
 let state = {zones:defaultZones(), checked:{}, trip:{}, memo:"", f:{car:true, cold:true, hide:false}};
-let editing = false, records = [];
+let records = [];
 function applySettings(json){
   if (!json) return;
   try{
@@ -390,7 +386,6 @@ function setSync(text, cls){ const el = document.getElementById("sync"); el.text
 
 /* ---------- 체크리스트 그리기 ---------- */
 function shownItems(z){
-  if (editing) return z.items;
   if (z.tag === "car" && !state.f.car) return null;
   return z.items.filter(it => state.f.cold || !it.c);
 }
@@ -408,6 +403,7 @@ function itemRow(z, i){
     return `<li class="qrow"><form class="qedit" data-z="${z.id}" data-i="${i.id}">
       <input class="qinput" id="q-${i.id}" value="${esc(i.t)}" aria-label="항목 이름 고치기">
       <button type="submit" class="qsave">저장</button>
+      <button type="button" class="ctog" data-z="${z.id}" data-i="${i.id}" aria-pressed="${i.c?"true":"false"}" title="추울 때만 필요한 항목으로 표시">추울 때</button>
       <button type="button" class="qdel" data-z="${z.id}" data-i="${i.id}">빼기</button>
       <button type="button" class="qcancel" aria-label="고치기 취소">취소</button></form></li>`;
   }
@@ -426,7 +422,9 @@ function zoneView(z){
     ? `<form class="qzone" data-z="${z.id}">
         <input class="zname" id="qz-${z.id}" value="${esc(z.name)}" placeholder="구역 이름" aria-label="구역 이름">
         <input class="zsub" id="qs-${z.id}" value="${esc(z.sub||"")}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
-        <div class="qbtns"><button type="submit" class="qsave">저장</button><button type="button" class="qcancel">취소</button></div></form>`
+        <label class="confirm"><input type="checkbox" id="zt-${z.id}" data-z="${z.id}" class="ztoggle" ${z.tag==="car"?"checked":""}> 차박 구역(차박 항목 버튼으로 숨김)</label>
+        <div class="qbtns"><button type="submit" class="qsave">저장</button><button type="button" class="qcancel">취소</button>
+          <span class="spacer"></span><span id="zd-${z.id}"><button type="button" class="link warn zdel" data-z="${z.id}">구역 삭제</button></span></div></form>`
     : `<div class="zone-head"><div><h2>${esc(z.name)}${z.tag==="car"?'<span class="ztag">차박</span>':""}<button class="pen pen-z" data-z="${z.id}" aria-label="${esc(z.name)} 구역 이름 고치기" title="구역 이름 고치기">${PENCIL}</button></h2>${z.sub?`<div class="sub">${esc(z.sub)}</div>`:""}</div>
       <div class="cnt">${full?"다 챙김 ":""}${k} / ${n}</div></div>`;
   return `<section class="zone${full?" complete":""}">
@@ -444,33 +442,11 @@ function openQuick(type, id){
 }
 function closeQuick(){ quick = null; render(); }
 
-function zoneEdit(z){
-  return `<section class="zone">
-    <div class="zedit">
-      <input class="zname" id="zn-${z.id}" data-z="${z.id}" data-f="name" value="${esc(z.name)}" placeholder="구역 이름" aria-label="구역 이름">
-      <input class="zsub" id="zs-${z.id}" data-z="${z.id}" data-f="sub" value="${esc(z.sub||"")}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
-    </div>
-    <ul>${z.items.map(i => `<li>
-      <input class="iname" id="in-${i.id}" data-z="${z.id}" data-i="${i.id}" value="${esc(i.t)}" aria-label="항목 이름">
-      <button class="ctog" data-z="${z.id}" data-i="${i.id}" aria-pressed="${i.c?"true":"false"}" title="추울 때만 필요한 항목으로 표시">추울 때</button>
-      <button class="del" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 빼기">×</button></li>`).join("")}</ul>
-    <form class="add" data-z="${z.id}"><input id="add-${z.id}" type="text" placeholder="항목 넣기" aria-label="${esc(z.name)}에 항목 넣기"><button type="submit">넣기</button></form>
-    <div class="zfoot">
-      <label class="confirm"><input type="checkbox" id="zt-${z.id}" data-z="${z.id}" class="ztoggle" ${z.tag==="car"?"checked":""}> 차박 구역(차박 항목 버튼으로 숨김)</label>
-      <span id="zd-${z.id}"><button class="link warn zdel" data-z="${z.id}">구역 삭제</button></span>
-    </div>
-  </section>`;
-}
 
 function render(){
   const grid = document.getElementById("grid");
-  grid.innerHTML = state.zones.map(z => editing ? zoneEdit(z) : zoneView(z)).join("")
-    + (editing ? '<button class="zone-new" id="zoneNew">+ 구역 추가</button>' : "");
-  document.body.classList.toggle("editing", editing);
-  document.body.classList.toggle("hide-done", state.f.hide && !editing);
-  document.getElementById("editNote").hidden = !editing;
-  const eb = document.getElementById("editBtn");
-  eb.setAttribute("aria-pressed", editing); eb.textContent = editing ? "편집 끝내기" : "목록 편집";
+  grid.innerHTML = state.zones.map(zoneView).join("") + '<button class="zone-new" id="zoneNew">+ 구역 추가</button>';
+  document.body.classList.toggle("hide-done", state.f.hide);
 
   const {tot, got} = countAll();
   document.getElementById("totalNum").innerHTML = `${got}<small> / ${tot}</small>`;
@@ -513,8 +489,7 @@ grid.addEventListener("click", e => {
   }
   if (t.id === "zoneNew"){
     const z = {id:uid(), name:"새 구역", sub:"", tag:"", items:[]};
-    state.zones.push(z); save(); render();
-    const el = document.getElementById("zn-"+z.id); if (el){ el.focus(); el.select(); }
+    state.zones.push(z); save(); openQuick("zone", z.id);
     return;
   }
   const z = t.dataset.z && findZone(t.dataset.z); if (!z) return;
@@ -527,9 +502,9 @@ grid.addEventListener("click", e => {
       `<span class="confirm">항목 ${z.items.length}개도 함께 지워져요. <button class="yes zdel-yes" data-z="${z.id}">삭제</button><button class="zdel-no" data-z="${z.id}">취소</button></span>`;
   } else if (t.classList.contains("zdel-yes")){
     z.items.forEach(i => delete state.checked[i.id]);
-    state.zones = state.zones.filter(x => x !== z); save(); render();
+    state.zones = state.zones.filter(x => x !== z); quick = null; save(); render();
   } else if (t.classList.contains("zdel-no")){
-    render();
+    document.getElementById("zd-"+z.id).innerHTML = `<button type="button" class="link warn zdel" data-z="${z.id}">구역 삭제</button>`;
   }
 });
 grid.addEventListener("keydown", e => {
@@ -559,7 +534,6 @@ grid.addEventListener("submit", e => {
 
 [["fCar","car"],["fCold","cold"],["fHide","hide"]].forEach(([id,k]) =>
   document.getElementById(id).addEventListener("click", () => { state.f[k] = !state.f[k]; save(); render(); }));
-document.getElementById("editBtn").addEventListener("click", () => { editing = !editing; quick = null; render(); });
 
 /* 체크 지우기 / 기본 목록으로 */
 function twoStep(boxId, label, question, yesLabel, onYes){
@@ -670,7 +644,7 @@ msg.addEventListener("click", e => {
 const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); };
 function isTyping(){
   const a = document.activeElement;
-  return editing || (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox")));
+  return !!quick || (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox")));
 }
 function load(first){
   return call("getData").then(d => {
