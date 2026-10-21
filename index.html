@@ -6,8 +6,10 @@
 <title>캠핑 준비물 체크리스트</title>
 <meta name="theme-color" content="#2F4A36">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon.png">
-<link rel="apple-touch-icon" href="icon.png">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="캠핑 체크">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -150,6 +152,11 @@ body.hide-done li.on{display:none}
 .conn .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
 .share{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:12px}
 .share .row .field{flex:1;min-width:0;font-size:13px}
+.install{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center;justify-content:space-between;background:var(--forest);color:var(--on-forest);border-radius:12px;padding:12px 16px}
+.install p{margin:0;font-size:14px}
+.install .btns{display:flex;gap:8px}
+.install button{font-size:13px;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--on-forest);background:transparent;color:var(--on-forest)}
+.install button.go{background:var(--on-forest);color:var(--forest)}
 footer{font-size:12px;color:var(--muted);text-align:center}
 
 @media (max-width:720px){
@@ -183,6 +190,11 @@ footer{font-size:12px;color:var(--muted);text-align:center}
       <label>예상 최저기온<input class="field" id="tripTemp" type="text" placeholder="예: 3℃"></label>
     </div>
   </header>
+
+  <div class="install" id="install" hidden>
+    <p id="installText">휴대폰에 앱으로 설치하면 아이콘을 눌러 바로 열 수 있어요.</p>
+    <div class="btns"><button class="go" id="installGo">앱으로 설치</button><button id="installLater">나중에</button></div>
+  </div>
 
   <div class="bar" id="totalBar"><i></i></div>
 
@@ -220,7 +232,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
   <section class="conn" id="conn" hidden aria-labelledby="connTitle">
     <h3 id="connTitle">구글 시트 연결</h3>
     <p>시트의 웹 앱 주소(/exec)를 한 번 열면 이 화면으로 넘어오면서 자동으로 연결돼요. 직접 넣으려면 아래에 주소와 비밀 코드를 넣으세요.</p>
-    <label>웹 앱 주소<input class="field" id="connApi" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label>웹 앱 주소 또는 연결 링크<input class="field" id="connApi" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
     <label>비밀 코드<input class="field" id="connKey" type="password" autocomplete="off"></label>
     <div class="row"><button class="primary" id="connSave">연결하기</button><button class="link warn" id="connOff">연결 끊기</button></div>
     <div class="msg" id="connMsg" aria-live="polite"></div>
@@ -627,8 +639,12 @@ document.getElementById("connBtn").addEventListener("click", () => {
   if (!connEl.hidden){ updateConnUI(); connEl.scrollIntoView({behavior:"smooth", block:"start"}); document.getElementById("connApi").focus(); }
 });
 document.getElementById("connSave").addEventListener("click", () => {
-  const api = document.getElementById("connApi").value.trim(), key = document.getElementById("connKey").value;
+  let api = document.getElementById("connApi").value.trim(), key = document.getElementById("connKey").value;
   connMsg.className = "msg";
+  try{
+    const u = new URL(api);
+    if (u.searchParams.get("api")){ key = u.searchParams.get("key") || key; api = u.searchParams.get("api"); }
+  }catch(e){}
   if (/script\.googleusercontent\.com/.test(api)){
     connMsg.className = "msg err";
     connMsg.textContent = "이 주소는 웹 앱을 브라우저로 열었을 때 바뀐 임시 주소예요. Apps Script의 [배포] > [배포 관리]에서 /exec 로 끝나는 웹 앱 주소를 복사해 넣어 주세요."; return;
@@ -659,6 +675,41 @@ document.getElementById("copyShare").addEventListener("click", () => {
     navigator.clipboard.writeText(inp.value).then(() => { connMsg.className = "msg"; connMsg.textContent = "링크를 복사했어요. 카톡으로 보내 주세요."; }, fallback);
   }catch(e){ fallback(); }
 });
+
+/* ---------- 앱으로 설치 ---------- */
+const STANDALONE = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+const installBox = document.getElementById("install"), installText = document.getElementById("installText"), installGo = document.getElementById("installGo");
+let installEvt = null;
+const installLater = () => { try{ return sessionStorage.getItem("camping-install-later"); }catch(e){ return null; } };
+if ("serviceWorker" in navigator && location.protocol === "https:"){
+  navigator.serviceWorker.register("sw.js").catch(() => {});
+}
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); installEvt = e;
+  if (!STANDALONE && !installLater()){ installText.textContent = "휴대폰에 앱으로 설치하면 아이콘을 눌러 바로 열 수 있어요."; installGo.hidden = false; installBox.hidden = false; }
+});
+if (IOS && !STANDALONE && !installLater()){
+  installText.textContent = "아이폰은 아래 [공유] 버튼을 누르고 [홈 화면에 추가]를 고르면 앱처럼 쓸 수 있어요. 설치한 앱에서는 처음 한 번 연결 링크를 붙여 넣어야 해요.";
+  installGo.hidden = true; installBox.hidden = false;
+}
+installGo.addEventListener("click", async () => {
+  if (!installEvt) return;
+  installEvt.prompt();
+  try{ await installEvt.userChoice; }catch(e){}
+  installEvt = null; installBox.hidden = true;
+});
+document.getElementById("installLater").addEventListener("click", () => {
+  installBox.hidden = true;
+  try{ sessionStorage.setItem("camping-install-later", "1"); }catch(e){}
+});
+window.addEventListener("appinstalled", () => { installBox.hidden = true; });
+
+/* 아이폰 홈 화면 앱은 사파리와 저장 공간이 따로라, 처음 열면 연결 링크를 붙여 넣게 안내 */
+if (STANDALONE && !SHEET){
+  connEl.hidden = false;
+  document.querySelector("#conn > p").textContent = "앱에서 처음 열었어요. 시트 연결 설정에 있는 [링크 복사]로 받은 연결 링크를 아래 칸에 붙여 넣고 [연결하기]를 누르세요. 비밀 코드 칸은 비워 둬도 돼요.";
+}
 
 /* ---------- 시작 ---------- */
 fillTrip(); render(); updateConnUI();

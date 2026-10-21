@@ -1,10 +1,18 @@
 {
+  "id": "./",
   "name": "캠핑 준비물 체크리스트",
   "short_name": "캠핑 체크",
+  "description": "캠핑 준비물 체크와 날짜별 캠핑 기록",
+  "lang": "ko",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ECEEE8",
   "theme_color": "#2F4A36",
-  "icons": [{"src": "icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}]
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
 }
