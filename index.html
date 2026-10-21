@@ -285,8 +285,17 @@ try{ conn = JSON.parse(lsGet(CKEY) || "{}") || {}; }catch(e){}
 let SHEET = !!conn.api;
 
 async function req(action, data){
-  const r = await fetch(conn.api, {method:"POST", body:JSON.stringify(Object.assign({action, key:conn.key}, data || {}))});
-  const j = await r.json();
+  const ACCESS_HINT = "Apps Script [배포] > [배포 관리] > 연필 버튼에서 '액세스 권한이 있는 사용자'를 '모든 사용자'로 바꾸고 다시 배포해 주세요.";
+  let r;
+  try{
+    r = await fetch(conn.api, {method:"POST", body:JSON.stringify(Object.assign({action, key:conn.key}, data || {}))});
+  }catch(e){
+    throw new Error("시트에 닿지 못했어요. 인터넷이 연결돼 있다면 " + ACCESS_HINT);
+  }
+  const text = await r.text();
+  let j;
+  try{ j = JSON.parse(text); }
+  catch(e){ throw new Error("시트가 자료 대신 로그인 화면을 보냈어요. " + ACCESS_HINT); }
   if (!j.ok) throw new Error(j.error || "시트가 대답하지 않았어요.");
   return j;
 }
