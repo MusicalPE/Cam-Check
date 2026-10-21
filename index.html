@@ -48,6 +48,17 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 .field{font-size:15px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%}
 
 .meter{text-align:right}
+.qr-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;border:1.5px solid var(--forest);background:transparent;color:var(--forest);border-radius:99px;padding:6px 13px;cursor:pointer;margin-bottom:8px}
+.qr-btn:hover{background:var(--forest);color:var(--on-forest)}
+.qr-modal{position:fixed;inset:0;z-index:50;background:rgba(10,14,10,.55);display:grid;place-items:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.qr-card{background:var(--surface);color:var(--ink);border-radius:18px;padding:22px;width:min(360px,100%);display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.qr-card h3{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0;color:var(--forest)}
+.qr-card p{margin:0;font-size:13px;color:var(--muted)}
+.qr-box{background:#fff;border-radius:12px;padding:12px;width:min(260px,100%)}
+.qr-box svg,.qr-box img{display:block;width:100%;height:auto}
+.qr-card .row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.qr-card .warn{color:var(--danger);font-size:12px}
 .meter .num{font-family:var(--f-mono);font-size:30px;font-variant-numeric:tabular-nums}
 .meter .num small{font-size:15px;color:var(--muted)}
 .meter .cap{font-size:12px;color:var(--muted)}
@@ -199,6 +210,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
       <h1>캠핑 준비물 체크리스트</h1>
     </div>
     <div class="meter">
+      <button class="qr-btn" id="qrBtn" aria-haspopup="dialog"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 3h5v5H3zM12 3h5v5h-5zM3 12h5v5H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 12h2v2h-2zM15 15h2v2h-2zM15 12h2v2h-2zM12 15h2v2h-2z" fill="currentColor"/></svg>가족 공유 QR</button>
       <div class="num" id="totalNum">0<small> / 0</small></div>
       <div class="cap" id="totalCap">챙긴 짐</div>
     </div>
@@ -259,8 +271,20 @@ footer{font-size:12px;color:var(--muted);text-align:center}
   <div class="conn-foot"><button class="link" id="connBtn" hidden>연결 주소 변경</button></div>
 
   <footer id="foot">Made by 음악적체육인</footer>
+
+  <div class="qr-modal" id="qrModal" hidden>
+    <div class="qr-card" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
+      <h3 id="qrTitle">가족 공유 QR</h3>
+      <p id="qrText">휴대폰 카메라로 찍으면 같은 시트에 연결된 체크리스트가 열려요.</p>
+      <div class="qr-box" id="qrBox"></div>
+      <p class="warn" id="qrWarn">비밀 코드가 들어 있어요. 가족에게만 보여 주세요.</p>
+      <div class="row"><button class="chip" id="qrCopy">링크 복사</button><button class="chip" id="qrClose">닫기</button></div>
+      <p id="qrMsg" aria-live="polite"></p>
+    </div>
+  </div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 /* ---------- 기본 목록 ---------- */
 const DEFAULT_ZONES = [
@@ -730,12 +754,50 @@ document.getElementById("copyShare").addEventListener("click", () => {
   }catch(e){ fallback(); }
 });
 
+/* ---------- 가족 공유 QR ---------- */
+const qrModal = document.getElementById("qrModal"), qrMsg = document.getElementById("qrMsg");
+let qrUrl = "", qrReturn = null;
+function openQr(){
+  qrUrl = SHEET ? shareLink() : location.origin + location.pathname;
+  document.getElementById("qrText").textContent = SHEET
+    ? "휴대폰 카메라로 찍으면 같은 시트에 연결된 체크리스트가 열려요. 한 번 열면 그 휴대폰에 연결이 저장돼요."
+    : "아직 시트에 연결하지 않아 화면만 열려요. 시트에 연결하면 이 QR로 함께 쓸 수 있어요.";
+  document.getElementById("qrWarn").hidden = !SHEET;
+  const box = document.getElementById("qrBox");
+  try{
+    const q = qrcode(0, "M"); q.addData(qrUrl); q.make();
+    box.innerHTML = q.createSvgTag({cellSize:6, margin:2, scalable:true});
+  }catch(e){
+    box.innerHTML = '<p style="color:#5E665C;font-size:13px;margin:0">QR을 만들지 못했어요. 인터넷에 연결한 뒤 다시 열거나, 링크 복사를 써 주세요.</p>';
+  }
+  qrMsg.textContent = "";
+  qrReturn = document.activeElement;
+  qrModal.hidden = false;
+  document.getElementById("qrClose").focus();
+}
+function closeQr(){ qrModal.hidden = true; if (qrReturn) qrReturn.focus(); }
+document.getElementById("qrBtn").addEventListener("click", openQr);
+document.getElementById("qrClose").addEventListener("click", closeQr);
+qrModal.addEventListener("click", e => { if (e.target === qrModal) closeQr(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !qrModal.hidden) closeQr(); });
+document.getElementById("qrCopy").addEventListener("click", () => {
+  const done = () => { qrMsg.textContent = "링크를 복사했어요. 카톡으로 보내도 돼요."; };
+  const fail = () => { qrMsg.textContent = qrUrl; };
+  try{ navigator.clipboard.writeText(qrUrl).then(done, fail); }catch(e){ fail(); }
+});
+
 /* ---------- 앱으로 설치 ---------- */
 const STANDALONE = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
 const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
 const installBox = document.getElementById("install"), installText = document.getElementById("installText"), installGo = document.getElementById("installGo");
 let installEvt = null;
-const installLater = () => { try{ return sessionStorage.getItem("camping-install-later"); }catch(e){ return null; } };
+/* 한 번 설치했거나 앱으로 연 기기는 브라우저에서도 설치 안내를 다시 띄우지 않음 */
+const IKEY = "camping-installed";
+if (STANDALONE) lsSet(IKEY, "1");
+const installLater = () => {
+  if (STANDALONE || lsGet(IKEY)) return "1";
+  try{ return sessionStorage.getItem("camping-install-later"); }catch(e){ return null; }
+};
 if ("serviceWorker" in navigator && location.protocol === "https:"){
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
@@ -750,14 +812,17 @@ if (IOS && !STANDALONE && !installLater()){
 installGo.addEventListener("click", async () => {
   if (!installEvt) return;
   installEvt.prompt();
-  try{ await installEvt.userChoice; }catch(e){}
+  try{ const c = await installEvt.userChoice; if (c && c.outcome === "accepted") lsSet(IKEY, "1"); }catch(e){}
   installEvt = null; installBox.hidden = true;
 });
 document.getElementById("installLater").addEventListener("click", () => {
   installBox.hidden = true;
   try{ sessionStorage.setItem("camping-install-later", "1"); }catch(e){}
 });
-window.addEventListener("appinstalled", () => { installBox.hidden = true; });
+window.addEventListener("appinstalled", () => { installBox.hidden = true; lsSet(IKEY, "1"); });
+if (navigator.getInstalledRelatedApps){
+  navigator.getInstalledRelatedApps().then(list => { if (list && list.length){ lsSet(IKEY, "1"); installBox.hidden = true; } }).catch(() => {});
+}
 
 /* 아이폰 홈 화면 앱은 사파리와 저장 공간이 따로라, 처음 열면 연결 링크를 붙여 넣게 안내 */
 if (STANDALONE && !SHEET){
