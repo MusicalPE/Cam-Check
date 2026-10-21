@@ -107,6 +107,21 @@ body.hide-done li.on{display:none}
 .del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:19px;line-height:1;padding:2px 6px;border-radius:4px}
 .del:hover{color:var(--danger)}
 
+.pen{flex:none;display:inline-grid;place-items:center;width:30px;height:30px;border:none;border-radius:6px;background:transparent;color:var(--muted);opacity:.5;cursor:pointer;padding:0}
+.pen:hover,.pen:focus-visible{opacity:1;color:var(--accent);background:var(--accent-soft)}
+li:hover .pen{opacity:.9}
+@media (hover:none){.pen{opacity:.75}}
+.pen-z{width:26px;height:26px;margin-left:4px;vertical-align:2px}
+.qrow{padding:5px 0}
+.qedit{display:flex;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
+.qinput{flex:1 1 140px;min-width:0;font-size:15px;background:var(--bg);border:1.5px solid var(--accent);border-radius:8px;padding:6px 10px}
+.qedit button,.qbtns button{font-size:13px;font-weight:600;border-radius:8px;padding:6px 11px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.qedit .qsave,.qbtns .qsave{background:var(--accent);border-color:var(--accent);color:var(--on-forest)}
+.qedit .qdel{color:var(--danger)}
+.qzone{display:flex;flex-direction:column;gap:6px}
+.qbtns{display:flex;gap:6px}
+.qadd input{font-size:13px;padding:6px 10px}
+.qadd button{font-size:12px}
 .add{display:flex;gap:6px}
 .add input{flex:1;min-width:0;font-size:14px;background:transparent;border:1px dashed var(--line);border-radius:8px;padding:7px 10px}
 .add button{font-size:13px;font-weight:600;border:none;border-radius:8px;padding:0 12px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
@@ -385,21 +400,49 @@ function countAll(){
   return {tot, got};
 }
 
+const PENCIL = '<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><path d="M13.6 3.2a1.6 1.6 0 0 1 2.3 0l.9.9a1.6 1.6 0 0 1 0 2.3L7.4 15.8l-3.6.9.9-3.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.2 4.6l3.2 3.2" stroke="currentColor" stroke-width="1.6"/></svg>';
+let quick = null; // 지금 연필로 고치는 것: {type:"item"|"zone", id}
+
+function itemRow(z, i){
+  if (quick && quick.type === "item" && quick.id === i.id){
+    return `<li class="qrow"><form class="qedit" data-z="${z.id}" data-i="${i.id}">
+      <input class="qinput" id="q-${i.id}" value="${esc(i.t)}" aria-label="항목 이름 고치기">
+      <button type="submit" class="qsave">저장</button>
+      <button type="button" class="qdel" data-z="${z.id}" data-i="${i.id}">빼기</button>
+      <button type="button" class="qcancel" aria-label="고치기 취소">취소</button></form></li>`;
+  }
+  return `<li class="${state.checked[i.id]?"on":""}">
+    <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span></label>
+    ${i.c?'<span class="tag">추울 때</span>':""}
+    <button class="pen" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 고치기" title="고치기">${PENCIL}</button></li>`;
+}
+
 function zoneView(z){
   const items = shownItems(z);
   if (!items) return "";
   const n = items.length, k = items.filter(i => state.checked[i.id]).length;
   const full = n && k === n;
+  const head = quick && quick.type === "zone" && quick.id === z.id
+    ? `<form class="qzone" data-z="${z.id}">
+        <input class="zname" id="qz-${z.id}" value="${esc(z.name)}" placeholder="구역 이름" aria-label="구역 이름">
+        <input class="zsub" id="qs-${z.id}" value="${esc(z.sub||"")}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
+        <div class="qbtns"><button type="submit" class="qsave">저장</button><button type="button" class="qcancel">취소</button></div></form>`
+    : `<div class="zone-head"><div><h2>${esc(z.name)}${z.tag==="car"?'<span class="ztag">차박</span>':""}<button class="pen pen-z" data-z="${z.id}" aria-label="${esc(z.name)} 구역 이름 고치기" title="구역 이름 고치기">${PENCIL}</button></h2>${z.sub?`<div class="sub">${esc(z.sub)}</div>`:""}</div>
+      <div class="cnt">${full?"다 챙김 ":""}${k} / ${n}</div></div>`;
   return `<section class="zone${full?" complete":""}">
-    <div class="zone-head"><div><h2>${esc(z.name)}${z.tag==="car"?'<span class="ztag">차박</span>':""}</h2>${z.sub?`<div class="sub">${esc(z.sub)}</div>`:""}</div>
-    <div class="cnt">${full?"다 챙김 ":""}${k} / ${n}</div></div>
+    ${head}
     <div class="bar${full?" full":""}"><i style="width:${n?k/n*100:0}%"></i></div>
-    ${n ? `<ul>${items.map(i => `<li class="${state.checked[i.id]?"on":""}">
-      <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span></label>
-      ${i.c?'<span class="tag">추울 때</span>':""}</li>`).join("")}</ul>`
-      : `<div class="empty">항목이 없어요. 목록 편집에서 넣을 수 있어요.</div>`}
+    ${n ? `<ul>${items.map(i => itemRow(z, i)).join("")}</ul>`
+      : `<div class="empty">항목이 없어요. 아래 칸에서 넣을 수 있어요.</div>`}
+    <form class="add qadd" data-z="${z.id}"><input id="add-${z.id}" type="text" placeholder="+ 항목 넣기" aria-label="${esc(z.name)}에 항목 넣기"><button type="submit">넣기</button></form>
   </section>`;
 }
+function openQuick(type, id){
+  quick = {type, id}; render();
+  const el = document.getElementById((type === "item" ? "q-" : "qz-") + id);
+  if (el){ el.focus(); el.select(); }
+}
+function closeQuick(){ quick = null; render(); }
 
 function zoneEdit(z){
   return `<section class="zone">
@@ -460,6 +503,14 @@ grid.addEventListener("input", e => {
 });
 grid.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
+  if (t.classList.contains("pen")){ e.preventDefault(); openQuick(t.dataset.i ? "item" : "zone", t.dataset.i || t.dataset.z); return; }
+  if (t.classList.contains("qcancel")){ closeQuick(); return; }
+  if (t.classList.contains("qdel")){
+    const qz = findZone(t.dataset.z);
+    qz.items = qz.items.filter(i => i.id !== t.dataset.i);
+    if (state.checked[t.dataset.i]){ delete state.checked[t.dataset.i]; setCheck(t.dataset.i, false); }
+    quick = null; save(); render(); return;
+  }
   if (t.id === "zoneNew"){
     const z = {id:uid(), name:"새 구역", sub:"", tag:"", items:[]};
     state.zones.push(z); save(); render();
@@ -481,9 +532,26 @@ grid.addEventListener("click", e => {
     render();
   }
 });
+grid.addEventListener("keydown", e => {
+  if (e.key === "Escape" && quick){ e.preventDefault(); closeQuick(); }
+});
 grid.addEventListener("submit", e => {
   e.preventDefault();
-  const z = findZone(e.target.dataset.z), inp = e.target.querySelector("input"), v = inp.value.trim();
+  const f = e.target;
+  if (f.classList.contains("qedit")){
+    const it = findZone(f.dataset.z).items.find(i => i.id === f.dataset.i), v = f.querySelector("input").value.trim();
+    if (it && v) it.t = v;
+    quick = null; save(); render();
+    const el = document.getElementById("c-"+f.dataset.i); if (el) el.focus();
+    return;
+  }
+  if (f.classList.contains("qzone")){
+    const qz = findZone(f.dataset.z), name = f.querySelector(".zname").value.trim();
+    if (name) qz.name = name;
+    qz.sub = f.querySelector(".zsub").value.trim();
+    quick = null; save(); render(); return;
+  }
+  const z = findZone(f.dataset.z), inp = f.querySelector("input"), v = inp.value.trim();
   if (!z || !v) return;
   z.items.push({id:uid(), t:v}); save(); render();
   const again = document.getElementById("add-"+z.id); if (again) again.focus();
@@ -491,7 +559,7 @@ grid.addEventListener("submit", e => {
 
 [["fCar","car"],["fCold","cold"],["fHide","hide"]].forEach(([id,k]) =>
   document.getElementById(id).addEventListener("click", () => { state.f[k] = !state.f[k]; save(); render(); }));
-document.getElementById("editBtn").addEventListener("click", () => { editing = !editing; render(); });
+document.getElementById("editBtn").addEventListener("click", () => { editing = !editing; quick = null; render(); });
 
 /* 체크 지우기 / 기본 목록으로 */
 function twoStep(boxId, label, question, yesLabel, onYes){

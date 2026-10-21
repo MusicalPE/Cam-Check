@@ -1,7 +1,7 @@
 /* 캠핑 체크 앱 — 화면 파일을 저장해 두었다가 인터넷이 약한 캠핑장에서도 열리게 함.
    화면은 늘 새로 받아 보고(업데이트 바로 반영), 안 되면 저장해 둔 것으로 엶.
    시트와 주고받는 자료(script.google.com)는 건드리지 않음. */
-const CACHE = "camping-v1.1.0";
+const CACHE = "camping-v1.2.0";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png"];
 
 self.addEventListener("install", e => {
