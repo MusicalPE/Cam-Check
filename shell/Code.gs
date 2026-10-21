@@ -1,0 +1,174 @@
+/**
+ * 캠핑 준비물 체크리스트 — 구글 시트 껍데기
+ * 화면은 GitHub Pages에 있고, 이 스크립트는 시트에 자료를 읽고 쓰는 일만 합니다.
+ * Made by 음악적체육인
+ *
+ * ▼ 아래 비밀 코드를 원하는 말로 바꾼 뒤 배포하세요.
+ *   (화면에서 처음 연결할 때 이 코드를 넣어야 시트에 읽고 쓸 수 있어요)
+ */
+const SECRET = '여기에-비밀코드-입력';
+
+const SHEET_RECORD = '캠핑기록';
+const SHEET_SETTING = '설정';
+const HEADER = ['출발일', '박', '캠핑장', '최저기온', '메모', '챙긴 수', '전체 수', '챙긴 항목', '안 챙긴 항목', '저장 시각', '기록ID'];
+
+function doGet() {
+  return json_({ ok: true, msg: '캠핑 체크리스트 시트 연결 주소입니다. 이 주소를 화면의 연결 설정에 넣으세요.' });
+}
+
+function doPost(e) {
+  let req;
+  try {
+    req = JSON.parse(e.postData.contents);
+  } catch (err) {
+    return json_({ ok: false, error: '요청을 읽지 못했어요.' });
+  }
+  if (String(req.key || '') !== SECRET) return json_({ ok: false, error: '비밀 코드가 맞지 않아요.' });
+
+  const lock = LockService.getScriptLock();
+  lock.waitLock(15000);
+  try {
+    switch (req.action) {
+      case 'get':
+        return json_({ ok: true, settings: readSettings_(), records: getRecords_() });
+      case 'saveSettings':
+        return json_(saveSettings_(req.settings, req.withChecked));
+      case 'check':
+        return json_(check_(req.id, req.on));
+      case 'clearChecks':
+        return json_(clearChecks_());
+      case 'saveRecord':
+        return json_({ ok: true, records: saveRecord_(req.rec || {}) });
+      case 'deleteRecord':
+        return json_({ ok: true, records: deleteRecord_(req.id) });
+      default:
+        return json_({ ok: false, error: '모르는 요청이에요.' });
+    }
+  } catch (err) {
+    return json_({ ok: false, error: String(err && err.message || err) });
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function json_(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function sheet_(name, header) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(name);
+  if (!sh) {
+    sh = ss.insertSheet(name);
+    if (header) {
+      sh.appendRow(header);
+      sh.setFrozenRows(1);
+      sh.getRange(1, 1, 1, header.length)
+        .setFontWeight('bold').setBackground('#2F4A36').setFontColor('#ffffff');
+      sh.setColumnWidth(3, 180);
+      sh.setColumnWidth(5, 260);
+      sh.setColumnWidth(8, 320);
+      sh.setColumnWidth(9, 260);
+    }
+  }
+  return sh;
+}
+
+/* ---------- 목록·체크 상태 (설정 탭 A1) ---------- */
+function settingCell_() {
+  const cell = sheet_(SHEET_SETTING).getRange('A1');
+  cell.setNumberFormat('@');
+  return cell;
+}
+function readObj_() {
+  const raw = settingCell_().getValue();
+  try { return raw ? JSON.parse(raw) : {}; } catch (e) { return {}; }
+}
+function writeObj_(obj) {
+  settingCell_().setValue(JSON.stringify(obj));
+}
+function readSettings_() {
+  const raw = settingCell_().getValue();
+  return raw ? String(raw) : '';
+}
+
+/** 목록·여행 정보 저장. 체크는 따로 합쳐서 관리(두 사람이 동시에 체크해도 안 지워지게) */
+function saveSettings_(json, withChecked) {
+  const incoming = JSON.parse(json);
+  const old = readObj_();
+  if (!withChecked || old.zones) incoming.checked = old.checked || {};
+  writeObj_(incoming);
+  return { ok: true };
+}
+function check_(id, on) {
+  const obj = readObj_();
+  obj.checked = obj.checked || {};
+  if (on) obj.checked[id] = 1; else delete obj.checked[id];
+  writeObj_(obj);
+  return { ok: true };
+}
+function clearChecks_() {
+  const obj = readObj_();
+  obj.checked = {};
+  writeObj_(obj);
+  return { ok: true };
+}
+
+/* ---------- 캠핑 기록 ---------- */
+function fmt_(v, pattern) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), pattern);
+  return v === null || v === undefined ? '' : String(v);
+}
+function split_(v) {
+  const s = String(v || '').trim();
+  return s ? s.split(', ') : [];
+}
+function getRecords_() {
+  const sh = sheet_(SHEET_RECORD, HEADER);
+  const last = sh.getLastRow();
+  if (last < 2) return [];
+  return sh.getRange(2, 1, last - 1, HEADER.length).getValues()
+    .filter(r => r[10] !== '')
+    .map(r => ({
+      date: fmt_(r[0], 'yyyy-MM-dd'),
+      nights: fmt_(r[1]),
+      place: fmt_(r[2]),
+      temp: fmt_(r[3]),
+      memo: fmt_(r[4]),
+      got: Number(r[5]) || 0,
+      total: Number(r[6]) || 0,
+      packed: split_(r[7]),
+      missed: split_(r[8]),
+      saved: fmt_(r[9], 'yyyy-MM-dd HH:mm'),
+      id: String(r[10])
+    }))
+    .sort((a, b) => (b.date + b.saved).localeCompare(a.date + a.saved));
+}
+function saveRecord_(r) {
+  const sh = sheet_(SHEET_RECORD, HEADER);
+  let date = '';
+  if (r.date) {
+    const p = String(r.date).split('-').map(Number);
+    date = new Date(p[0], p[1] - 1, p[2]);
+  }
+  sh.appendRow([
+    date, Number(r.nights) || '', r.place || '', r.temp || '', r.memo || '',
+    r.got || 0, r.total || 0, (r.packed || []).join(', '), (r.missed || []).join(', '),
+    new Date(), Utilities.getUuid().slice(0, 8)
+  ]);
+  const row = sh.getLastRow();
+  sh.getRange(row, 1).setNumberFormat('yyyy-mm-dd');
+  sh.getRange(row, 10).setNumberFormat('yyyy-mm-dd hh:mm');
+  return getRecords_();
+}
+function deleteRecord_(id) {
+  const sh = sheet_(SHEET_RECORD, HEADER);
+  const last = sh.getLastRow();
+  if (last >= 2) {
+    const ids = sh.getRange(2, 11, last - 1, 1).getValues();
+    for (let i = ids.length - 1; i >= 0; i--) {
+      if (String(ids[i][0]) === String(id)) { sh.deleteRow(i + 2); break; }
+    }
+  }
+  return getRecords_();
+}

@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>캠핑 준비물 체크리스트</title>
+<meta name="theme-color" content="#2F4A36">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.png">
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-title" content="캠핑 체크">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: 숲 속 사이트 안내판 느낌 — 상단 여행 정보 + 전체 진행 막대, 구역별 카드 격자, 맨 아래 날짜별 캠핑 기록 */
+:root{
+  --bg:#ECEEE8; --surface:#F8F9F5; --ink:#1C201C; --muted:#5E665C; --line:#D3D8CD;
+  --accent:#C9771E; --accent-soft:#F3E1C8; --forest:#2F4A36; --done:#8A938A; --on-forest:#F8F9F5; --danger:#B4432F;
+  --f-display:"Black Han Sans","Noto Sans KR",sans-serif;
+  --f-body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#141714; --surface:#1C201C; --ink:#E7EAE2; --muted:#9AA396; --line:#2E342E;
+  --accent:#E79A3E; --accent-soft:#3A2B18; --forest:#9DBF9F; --done:#6A7369; --on-forest:#141714; --danger:#E0806C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#141714; --surface:#1C201C; --ink:#E7EAE2; --muted:#9AA396; --line:#2E342E;
+  --accent:#E79A3E; --accent-soft:#3A2B18; --forest:#9DBF9F; --done:#6A7369; --on-forest:#141714; --danger:#E0806C; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55;margin:0;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 56px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+button{font:inherit}
+input,textarea{font:inherit;color:var(--ink)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+header{display:grid;grid-template-columns:1fr auto;gap:20px 28px;align-items:end}
+.eyebrow{font-family:var(--f-mono);font-size:12px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);line-height:1.05;margin:6px 0 0;text-wrap:balance;color:var(--forest)}
+.trip{display:grid;grid-template-columns:1.1fr .5fr 1.6fr .8fr;gap:10px;grid-column:1/-1}
+.trip label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.field{font-size:15px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%}
+
+.meter{text-align:right}
+.meter .num{font-family:var(--f-mono);font-size:30px;font-variant-numeric:tabular-nums}
+.meter .num small{font-size:15px;color:var(--muted)}
+.meter .cap{font-size:12px;color:var(--muted)}
+
+.bar{height:10px;background:var(--line);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:0;background:var(--accent);border-radius:99px;transition:width .35s ease}
+.bar.full i{background:var(--forest)}
+
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chip{font-size:13px;font-weight:500;border:1px solid var(--line);background:var(--surface);color:var(--muted);border-radius:99px;padding:7px 14px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--forest);color:var(--on-forest);border-color:var(--forest)}
+.spacer{flex:1}
+.edit-btn{font-size:13px;font-weight:600;border:1.5px solid var(--accent);background:transparent;color:var(--accent);border-radius:99px;padding:6px 14px;cursor:pointer}
+.edit-btn[aria-pressed="true"]{background:var(--accent);color:var(--on-forest)}
+.link{font-size:13px;border:none;background:none;color:var(--muted);cursor:pointer;text-decoration:underline;text-underline-offset:3px;padding:0}
+.link.warn{color:var(--danger)}
+.confirm{display:inline-flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:13px}
+.confirm button{font-size:13px;border-radius:6px;padding:5px 10px;cursor:pointer;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.confirm .yes{background:var(--accent);border-color:var(--accent);color:var(--on-forest)}
+
+.edit-note{font-size:13px;color:var(--accent);background:var(--accent-soft);border-radius:10px;padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;align-items:start}
+.zone{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 14px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.editing .zone{border-style:dashed;border-color:var(--accent)}
+.zone-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.zone-head > div{min-width:0}
+.zone h2{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;overflow-wrap:anywhere}
+.zone .sub{font-size:12px;color:var(--muted);margin-top:2px}
+.zone .cnt{font-family:var(--f-mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.zone.complete .cnt{color:var(--forest)}
+.zone .bar{height:4px}
+.zone .empty{font-size:13px;color:var(--muted)}
+.ztag{font-size:11px;font-weight:600;color:var(--forest);border:1px solid var(--forest);border-radius:99px;padding:1px 7px;margin-left:6px;vertical-align:3px;font-family:var(--f-body)}
+
+.zedit{display:flex;flex-direction:column;gap:6px}
+.zname{font-family:var(--f-display);font-size:21px;border:none;border-bottom:1.5px solid var(--line);background:transparent;padding:2px 0;width:100%}
+.zsub{font-size:13px;border:none;border-bottom:1px solid var(--line);background:transparent;padding:2px 0;color:var(--muted);width:100%}
+.zname:focus,.zsub:focus,.iname:focus{border-color:var(--accent);outline:none}
+
+ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+li{display:flex;align-items:center;gap:10px;padding:7px 2px;border-top:1px dashed var(--line)}
+li:first-child{border-top:none}
+li label{display:flex;align-items:center;gap:11px;flex:1;cursor:pointer;min-width:0}
+input[type=checkbox]{appearance:none;width:20px;height:20px;flex:none;border:1.5px solid var(--muted);border-radius:5px;display:grid;place-content:center;cursor:pointer;background:var(--surface);margin:0}
+input[type=checkbox]::after{content:"";width:10px;height:5px;border-left:2px solid var(--on-forest);border-bottom:2px solid var(--on-forest);transform:rotate(-45deg) translate(1px,-1px);opacity:0}
+input[type=checkbox]:checked{background:var(--forest);border-color:var(--forest)}
+input[type=checkbox]:checked::after{opacity:1}
+li .txt{overflow-wrap:anywhere}
+li.on .txt{color:var(--done);text-decoration:line-through}
+.tag{font-size:11px;font-weight:600;padding:2px 7px;border-radius:99px;background:var(--accent-soft);color:var(--accent);white-space:nowrap}
+body.hide-done li.on{display:none}
+
+.iname{flex:1;min-width:0;border:none;border-bottom:1px solid transparent;background:transparent;padding:3px 0;font-size:15px}
+.iname:hover{border-bottom-color:var(--line)}
+.ctog{font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px;cursor:pointer;white-space:nowrap;border:1px dashed var(--line);background:transparent;color:var(--muted)}
+.ctog[aria-pressed="true"]{border:1px solid transparent;background:var(--accent-soft);color:var(--accent)}
+.del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:19px;line-height:1;padding:2px 6px;border-radius:4px}
+.del:hover{color:var(--danger)}
+
+.add{display:flex;gap:6px}
+.add input{flex:1;min-width:0;font-size:14px;background:transparent;border:1px dashed var(--line);border-radius:8px;padding:7px 10px}
+.add button{font-size:13px;font-weight:600;border:none;border-radius:8px;padding:0 12px;background:var(--accent-soft);color:var(--accent);cursor:pointer}
+.zfoot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.zone-new{border:1.5px dashed var(--line);border-radius:14px;background:transparent;color:var(--muted);font-size:15px;font-weight:600;padding:28px;cursor:pointer;min-height:120px}
+.zone-new:hover{border-color:var(--accent);color:var(--accent)}
+
+/* 캠핑 기록 */
+.log{border-top:2px solid var(--forest);padding-top:22px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:20px 28px}
+.log h2{font-family:var(--f-display);font-weight:400;font-size:30px;margin:0;color:var(--forest)}
+.sync{font-size:12px;color:var(--muted);margin-top:4px}
+.sync.ok{color:var(--forest)}
+.sync.err{color:var(--danger)}
+.stats{display:flex;gap:22px;margin-top:16px;flex-wrap:wrap}
+.stat .v{font-family:var(--f-mono);font-size:26px;font-variant-numeric:tabular-nums;line-height:1.1}
+.stat .k{font-size:12px;color:var(--muted)}
+.log-form{display:flex;flex-direction:column;gap:8px;margin-top:18px}
+.log-form textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:10px 12px;min-height:76px;resize:vertical;font-size:14px}
+.primary{font-size:15px;font-weight:600;border:none;border-radius:10px;padding:12px 16px;background:var(--forest);color:var(--on-forest);cursor:pointer}
+.primary:disabled{opacity:.6;cursor:wait}
+.msg{font-size:13px;min-height:1em}
+.msg.err{color:var(--danger)}
+.often{font-size:13px;color:var(--muted);margin-top:14px}
+.often b{color:var(--ink);font-weight:600}
+
+.records{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.records li{display:block;border:1px solid var(--line);border-radius:10px;background:var(--surface);padding:0}
+.records summary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:4px 14px;align-items:baseline;padding:12px 14px;cursor:pointer;list-style:none}
+.records summary::-webkit-details-marker{display:none}
+.rdate{font-family:var(--f-mono);font-size:13px;color:var(--accent);font-variant-numeric:tabular-nums}
+.rplace{font-weight:600;overflow-wrap:anywhere}
+.rmeta{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.rbody{padding:0 14px 14px;font-size:13px;display:flex;flex-direction:column;gap:6px;color:var(--muted)}
+.rbody p{margin:0}
+.rbody b{color:var(--ink);font-weight:600}
+.no-rec{font-size:14px;color:var(--muted);border:1px dashed var(--line);border-radius:10px;padding:22px;text-align:center}
+
+.sync-row{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline}
+.conn{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px;max-width:640px}
+.conn h3{font-family:var(--f-display);font-weight:400;font-size:22px;margin:0;color:var(--forest)}
+.conn p{margin:0;font-size:13px;color:var(--muted)}
+.conn label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted)}
+.conn .row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.share{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:12px}
+.share .row .field{flex:1;min-width:0;font-size:13px}
+footer{font-size:12px;color:var(--muted);text-align:center}
+
+@media (max-width:720px){
+  .trip{grid-template-columns:1fr 1fr}
+  .log{grid-template-columns:1fr}
+}
+@media (max-width:560px){
+  header{grid-template-columns:1fr}
+  .meter{text-align:left}
+  .records summary{grid-template-columns:auto minmax(0,1fr)}
+  .rmeta{grid-column:1/-1}
+}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow">Auto Camping · 차박</div>
+      <h1>캠핑 준비물 체크리스트</h1>
+    </div>
+    <div class="meter">
+      <div class="num" id="totalNum">0<small> / 0</small></div>
+      <div class="cap" id="totalCap">챙긴 짐</div>
+    </div>
+    <div class="trip">
+      <label>출발일<input class="field" id="tripStart" type="date"></label>
+      <label>몇 박<input class="field" id="tripNights" type="number" min="0" max="30" inputmode="numeric" placeholder="1"></label>
+      <label>캠핑장<input class="field" id="tripPlace" type="text" placeholder="예: 숲속 오토캠핑장 A-12"></label>
+      <label>예상 최저기온<input class="field" id="tripTemp" type="text" placeholder="예: 3℃"></label>
+    </div>
+  </header>
+
+  <div class="bar" id="totalBar"><i></i></div>
+
+  <div class="tools">
+    <button class="chip" id="fCar" aria-pressed="true">차박 항목</button>
+    <button class="chip" id="fCold" aria-pressed="true">추울 때 항목</button>
+    <button class="chip" id="fHide" aria-pressed="false">챙긴 것 숨기기</button>
+    <span class="spacer"></span>
+    <span id="resetBox"></span>
+    <button class="edit-btn" id="editBtn" aria-pressed="false">목록 편집</button>
+  </div>
+
+  <div class="edit-note" id="editNote" hidden>
+    <span>구역 이름과 설명, 항목 이름을 눌러 바로 고칠 수 있어요. ×로 빼고, 아래 칸에서 넣어요.</span>
+    <span id="defaultBox"></span>
+  </div>
+
+  <main class="grid" id="grid"></main>
+
+  <section class="log" aria-labelledby="logTitle">
+    <div>
+      <h2 id="logTitle">캠핑 기록</h2>
+      <div class="sync-row"><span class="sync" id="sync">불러오는 중…</span><button class="link" id="connBtn">시트 연결 설정</button></div>
+      <div class="stats" id="stats"></div>
+      <div class="log-form">
+        <textarea id="memo" placeholder="한 줄 메모: 날씨, 좋았던 점, 다음에 챙길 것"></textarea>
+        <button class="primary" id="saveRec">이번 캠핑 기록하기</button>
+        <div class="msg" id="recMsg" aria-live="polite"></div>
+      </div>
+      <div class="often" id="often"></div>
+    </div>
+    <ol class="records" id="records"></ol>
+  </section>
+
+  <section class="conn" id="conn" hidden aria-labelledby="connTitle">
+    <h3 id="connTitle">구글 시트 연결</h3>
+    <p>시트 껍데기를 웹 앱으로 배포한 주소와 비밀 코드를 넣으면, 이 기기도 같은 시트에 체크와 기록을 함께 남겨요.</p>
+    <label>웹 앱 주소<input class="field" id="connApi" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
+    <label>비밀 코드<input class="field" id="connKey" type="password" autocomplete="off"></label>
+    <div class="row"><button class="primary" id="connSave">연결하기</button><button class="link warn" id="connOff">연결 끊기</button></div>
+    <div class="msg" id="connMsg" aria-live="polite"></div>
+    <div class="share" id="shareBox" hidden>
+      <p>함께 쓸 사람의 휴대폰에 보낼 링크예요. 한 번 열면 그 기기에 연결이 저장되고, 다음부터는 짧은 주소로 열면 돼요. 비밀 코드가 들어 있으니 가족에게만 보내세요.</p>
+      <div class="row"><input class="field" id="shareLink" readonly aria-label="연결 링크"><button class="chip" id="copyShare">링크 복사</button></div>
+    </div>
+  </section>
+
+  <footer id="foot">Made by 음악적체육인</footer>
+</div>
+
+<script>
+/* ---------- 기본 목록 ---------- */
+const DEFAULT_ZONES = [
+  {key:"site", name:"사이트 구축", sub:"텐트 · 타프 · 바닥", items:[
+    "텐트 / 쉘터","타프","타프 폴대","팩 · 팩망치","스트링 · 스토퍼","그라운드시트(방수포)","이너 매트 · 러그"]},
+  {key:"car", name:"차박 세팅", sub:"차 안을 침실로", tag:"car", items:[
+    "평탄화 매트","차량용 암막 · 방충망","도킹 텐트 / 차박 타프","트렁크 정리함","차량용 걸이 · S고리"]},
+  {key:"bed", name:"침실", sub:"잘 자야 다음 날이 편하다", items:[
+    "침낭",["동계 침낭"],"에어매트 / 자충매트","베개","담요",["전기장판 · 전기요"]]},
+  {key:"power", name:"전기 · 난방", sub:"전기 사이트 기준", items:[
+    "릴선(전선릴)","멀티탭","파워뱅크","캠핑용 배터리",["난로"],["등유 · 난로 연료"],["일산화탄소 경보기"],["핫팩"]]},
+  {key:"living", name:"거실", sub:"테이블 · 의자 · 조명", items:[
+    "캠핑 테이블","체어","메인 랜턴","보조 랜턴 · 무드등","랜턴 걸이 · 스탠드","카고 컨테이너(수납)","선반 · 키친 테이블"]},
+  {key:"kitchen", name:"주방", sub:"굽고 끓이고 씻고", items:[
+    "버너","가스(여분까지)","코펠 · 냄비","프라이팬 · 그리들","식기 · 수저","칼 · 도마","집게 · 가위","아이스박스","생수 · 물통","세제 · 수세미","키친타월 · 물티슈","지퍼백 · 쓰레기봉투"]},
+  {key:"fire", name:"화로 · 불멍", sub:"마지막까지 안전하게", items:[
+    "화로대","화로대 받침(방염포)","장작","토치 · 라이터","내열 장갑","소화기 · 소화 스프레이"]},
+  {key:"food", name:"먹거리", sub:"장보기 목록", items:[
+    "고기 · 해산물","즉석밥 · 쌀","라면","아침거리","양념 · 오일","커피 · 드립 도구","간식 · 음료"]},
+  {key:"personal", name:"개인 · 위생", sub:"사람 챙기기", items:[
+    "옷 여벌",["패딩 · 방한복"],["털모자 · 장갑"],"세면도구","수건","슬리퍼 · 크록스","상비약","휴대폰 충전기"]},
+  {key:"fun", name:"놀거리", sub:"쉬러 가는 거니까", items:[
+    "블루투스 스피커","보드게임","책","무릎 담요"]}
+];
+function defaultZones(){
+  return DEFAULT_ZONES.map(z => ({
+    id:z.key, name:z.name, sub:z.sub, tag:z.tag||"",
+    items:z.items.map((it,i) => Array.isArray(it) ? {id:z.key+"-"+i, t:it[0], c:1} : {id:z.key+"-"+i, t:it})
+  }));
+}
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---------- 저장소: 구글 시트 껍데기(웹 앱) 또는 이 기기 ---------- */
+const KEY = "camping-checklist-v2", RKEY = "camping-records-v1", CKEY = "camping-conn-v1";
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+let conn = {};
+try{ conn = JSON.parse(lsGet(CKEY) || "{}") || {}; }catch(e){}
+(function fromLink(){
+  try{
+    const q = new URLSearchParams(location.search);
+    if (q.get("api")){
+      conn = {api:q.get("api"), key:q.get("key") || ""};
+      lsSet(CKEY, JSON.stringify(conn));
+      history.replaceState(null, "", location.pathname);
+    }
+  }catch(e){}
+})();
+let SHEET = !!conn.api;
+
+async function req(action, data){
+  const r = await fetch(conn.api, {method:"POST", body:JSON.stringify(Object.assign({action, key:conn.key}, data || {}))});
+  const j = await r.json();
+  if (!j.ok) throw new Error(j.error || "시트가 대답하지 않았어요.");
+  return j;
+}
+const sortRecs = l => l.sort((a,b) => (b.date+b.saved).localeCompare(a.date+a.saved));
+const local = {
+  getData(){ let r=[]; try{ r = JSON.parse(lsGet(RKEY)||"[]"); }catch(e){} return {settings:lsGet(KEY)||"", records:sortRecs(r)}; },
+  saveRecord(rec){
+    const l = local.getData().records;
+    const d = new Date(), p = n => String(n).padStart(2,"0");
+    l.push(Object.assign({}, rec, {id:uid(), saved:`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`}));
+    lsSet(RKEY, JSON.stringify(l)); return sortRecs(l);
+  },
+  deleteRecord(id){ const l = local.getData().records.filter(r => r.id !== id); lsSet(RKEY, JSON.stringify(l)); return l; }
+};
+async function call(fn, arg){
+  if (!SHEET) return local[fn](arg);
+  if (fn === "getData"){ const j = await req("get"); return {settings:j.settings, records:j.records}; }
+  if (fn === "saveRecord") return (await req("saveRecord", {rec:arg})).records;
+  if (fn === "deleteRecord") return (await req("deleteRecord", {id:arg})).records;
+}
+let pending = 0;
+function track(p, okText){
+  pending++; setSync("시트에 저장 중…");
+  return p.then(() => { pending--; if (!pending) setSync(okText || "구글 시트와 연결됨 · 저장 완료", "ok"); })
+    .catch(err => { pending--; setSync("시트에 저장하지 못했어요. " + (err && err.message || "인터넷 연결을 확인해 주세요."), "err"); });
+}
+
+/* ---------- 상태 ---------- */
+let state = {zones:defaultZones(), checked:{}, trip:{}, memo:"", f:{car:true, cold:true, hide:false}};
+let editing = false, records = [];
+function applySettings(json){
+  if (!json) return;
+  try{
+    const s = JSON.parse(json);
+    if (s && Array.isArray(s.zones)){ state = Object.assign(state, s); state.checked = s.checked || {}; }
+    else if (s && s.checked) state.checked = s.checked;
+  }catch(e){}
+}
+applySettings(lsGet(KEY));
+
+function settingsJson(withChecked){
+  const s = Object.assign({}, state);
+  if (!withChecked) delete s.checked;
+  return JSON.stringify(s);
+}
+let saveTimer = null;
+function save(){
+  lsSet(KEY, JSON.stringify(state));
+  if (!SHEET) return;
+  clearTimeout(saveTimer);
+  setSync("시트에 저장 중…");
+  saveTimer = setTimeout(() => { saveTimer = null; track(req("saveSettings", {settings:settingsJson(false)})); }, 900);
+}
+/* 체크는 한 칸씩 보내서, 두 사람이 동시에 체크해도 서로 지우지 않게 */
+function setCheck(id, on){
+  lsSet(KEY, JSON.stringify(state));
+  if (SHEET) track(req("check", {id, on}));
+}
+function clearChecks(){
+  state.checked = {};
+  lsSet(KEY, JSON.stringify(state));
+  if (SHEET) track(req("clearChecks"));
+}
+function setSync(text, cls){ const el = document.getElementById("sync"); el.textContent = text; el.className = "sync" + (cls ? " "+cls : ""); }
+
+/* ---------- 체크리스트 그리기 ---------- */
+function shownItems(z){
+  if (editing) return z.items;
+  if (z.tag === "car" && !state.f.car) return null;
+  return z.items.filter(it => state.f.cold || !it.c);
+}
+function countAll(){
+  let tot = 0, got = 0;
+  state.zones.forEach(z => { const it = shownItems(z); if (!it) return; tot += it.length; got += it.filter(i => state.checked[i.id]).length; });
+  return {tot, got};
+}
+
+function zoneView(z){
+  const items = shownItems(z);
+  if (!items) return "";
+  const n = items.length, k = items.filter(i => state.checked[i.id]).length;
+  const full = n && k === n;
+  return `<section class="zone${full?" complete":""}">
+    <div class="zone-head"><div><h2>${esc(z.name)}${z.tag==="car"?'<span class="ztag">차박</span>':""}</h2>${z.sub?`<div class="sub">${esc(z.sub)}</div>`:""}</div>
+    <div class="cnt">${full?"다 챙김 ":""}${k} / ${n}</div></div>
+    <div class="bar${full?" full":""}"><i style="width:${n?k/n*100:0}%"></i></div>
+    ${n ? `<ul>${items.map(i => `<li class="${state.checked[i.id]?"on":""}">
+      <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span></label>
+      ${i.c?'<span class="tag">추울 때</span>':""}</li>`).join("")}</ul>`
+      : `<div class="empty">항목이 없어요. 목록 편집에서 넣을 수 있어요.</div>`}
+  </section>`;
+}
+
+function zoneEdit(z){
+  return `<section class="zone">
+    <div class="zedit">
+      <input class="zname" id="zn-${z.id}" data-z="${z.id}" data-f="name" value="${esc(z.name)}" placeholder="구역 이름" aria-label="구역 이름">
+      <input class="zsub" id="zs-${z.id}" data-z="${z.id}" data-f="sub" value="${esc(z.sub||"")}" placeholder="한 줄 설명(비워도 돼요)" aria-label="구역 설명">
+    </div>
+    <ul>${z.items.map(i => `<li>
+      <input class="iname" id="in-${i.id}" data-z="${z.id}" data-i="${i.id}" value="${esc(i.t)}" aria-label="항목 이름">
+      <button class="ctog" data-z="${z.id}" data-i="${i.id}" aria-pressed="${i.c?"true":"false"}" title="추울 때만 필요한 항목으로 표시">추울 때</button>
+      <button class="del" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 빼기">×</button></li>`).join("")}</ul>
+    <form class="add" data-z="${z.id}"><input id="add-${z.id}" type="text" placeholder="항목 넣기" aria-label="${esc(z.name)}에 항목 넣기"><button type="submit">넣기</button></form>
+    <div class="zfoot">
+      <label class="confirm"><input type="checkbox" id="zt-${z.id}" data-z="${z.id}" class="ztoggle" ${z.tag==="car"?"checked":""}> 차박 구역(차박 항목 버튼으로 숨김)</label>
+      <span id="zd-${z.id}"><button class="link warn zdel" data-z="${z.id}">구역 삭제</button></span>
+    </div>
+  </section>`;
+}
+
+function render(){
+  const grid = document.getElementById("grid");
+  grid.innerHTML = state.zones.map(z => editing ? zoneEdit(z) : zoneView(z)).join("")
+    + (editing ? '<button class="zone-new" id="zoneNew">+ 구역 추가</button>' : "");
+  document.body.classList.toggle("editing", editing);
+  document.body.classList.toggle("hide-done", state.f.hide && !editing);
+  document.getElementById("editNote").hidden = !editing;
+  const eb = document.getElementById("editBtn");
+  eb.setAttribute("aria-pressed", editing); eb.textContent = editing ? "편집 끝내기" : "목록 편집";
+
+  const {tot, got} = countAll();
+  document.getElementById("totalNum").innerHTML = `${got}<small> / ${tot}</small>`;
+  document.getElementById("totalCap").textContent = tot && got === tot ? "출발 준비 끝" : `챙긴 짐 · 남은 ${tot-got}개`;
+  const tb = document.getElementById("totalBar");
+  tb.querySelector("i").style.width = (tot ? got/tot*100 : 0) + "%";
+  tb.classList.toggle("full", tot > 0 && got === tot);
+  [["fCar","car"],["fCold","cold"],["fHide","hide"]].forEach(([id,k]) => document.getElementById(id).setAttribute("aria-pressed", state.f[k]));
+}
+function findZone(id){ return state.zones.find(z => z.id === id); }
+
+/* ---------- 체크리스트 동작 ---------- */
+const grid = document.getElementById("grid");
+grid.addEventListener("change", e => {
+  const t = e.target;
+  if (t.classList.contains("ztoggle")){ findZone(t.dataset.z).tag = t.checked ? "car" : ""; save(); return; }
+  if (t.type === "checkbox" && t.dataset.i){
+    if (t.checked) state.checked[t.dataset.i] = 1; else delete state.checked[t.dataset.i];
+    setCheck(t.dataset.i, t.checked); render();
+    const el = document.getElementById("c-"+t.dataset.i); if (el) el.focus();
+  }
+});
+grid.addEventListener("input", e => {
+  const t = e.target, z = t.dataset.z && findZone(t.dataset.z);
+  if (!z) return;
+  if (t.dataset.f) z[t.dataset.f] = t.value;
+  else if (t.classList.contains("iname")){ const it = z.items.find(i => i.id === t.dataset.i); if (it) it.t = t.value; }
+  else return;
+  save();
+});
+grid.addEventListener("click", e => {
+  const t = e.target.closest("button"); if (!t) return;
+  if (t.id === "zoneNew"){
+    const z = {id:uid(), name:"새 구역", sub:"", tag:"", items:[]};
+    state.zones.push(z); save(); render();
+    const el = document.getElementById("zn-"+z.id); if (el){ el.focus(); el.select(); }
+    return;
+  }
+  const z = t.dataset.z && findZone(t.dataset.z); if (!z) return;
+  if (t.classList.contains("del")){
+    z.items = z.items.filter(i => i.id !== t.dataset.i); delete state.checked[t.dataset.i]; save(); render();
+  } else if (t.classList.contains("ctog")){
+    const it = z.items.find(i => i.id === t.dataset.i); it.c = it.c ? 0 : 1; save(); render();
+  } else if (t.classList.contains("zdel")){
+    document.getElementById("zd-"+z.id).innerHTML =
+      `<span class="confirm">항목 ${z.items.length}개도 함께 지워져요. <button class="yes zdel-yes" data-z="${z.id}">삭제</button><button class="zdel-no" data-z="${z.id}">취소</button></span>`;
+  } else if (t.classList.contains("zdel-yes")){
+    z.items.forEach(i => delete state.checked[i.id]);
+    state.zones = state.zones.filter(x => x !== z); save(); render();
+  } else if (t.classList.contains("zdel-no")){
+    render();
+  }
+});
+grid.addEventListener("submit", e => {
+  e.preventDefault();
+  const z = findZone(e.target.dataset.z), inp = e.target.querySelector("input"), v = inp.value.trim();
+  if (!z || !v) return;
+  z.items.push({id:uid(), t:v}); save(); render();
+  const again = document.getElementById("add-"+z.id); if (again) again.focus();
+});
+
+[["fCar","car"],["fCold","cold"],["fHide","hide"]].forEach(([id,k]) =>
+  document.getElementById(id).addEventListener("click", () => { state.f[k] = !state.f[k]; save(); render(); }));
+document.getElementById("editBtn").addEventListener("click", () => { editing = !editing; render(); });
+
+/* 체크 지우기 / 기본 목록으로 */
+function twoStep(boxId, label, question, yesLabel, onYes){
+  const box = document.getElementById(boxId);
+  const idle = () => { box.innerHTML = `<button class="link">${label}</button>`; };
+  idle();
+  box.addEventListener("click", e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.classList.contains("link")){
+      box.innerHTML = `<span class="confirm">${question} <button class="yes">${yesLabel}</button><button class="no">취소</button></span>`;
+      box.querySelector(".no").focus();
+    } else if (b.classList.contains("yes")){ onYes(); idle(); }
+    else idle();
+  });
+  return idle;
+}
+const resetIdle = twoStep("resetBox", "체크 모두 지우기", "체크를 모두 지울까요?", "지우기", () => { clearChecks(); render(); });
+twoStep("defaultBox", "처음 목록으로 되돌리기", "내가 고친 구역과 항목이 모두 처음 목록으로 바뀌어요.", "되돌리기",
+  () => { state.zones = defaultZones(); save(); clearChecks(); render(); });
+
+/* 여행 정보 */
+const TRIP = {tripStart:"start", tripNights:"nights", tripPlace:"place", tripTemp:"temp"};
+function fillTrip(){
+  Object.entries(TRIP).forEach(([id,k]) => { document.getElementById(id).value = state.trip[k] || ""; });
+  document.getElementById("memo").value = state.memo || "";
+}
+Object.entries(TRIP).forEach(([id,k]) => document.getElementById(id).addEventListener("input", e => { state.trip[k] = e.target.value; save(); }));
+document.getElementById("memo").addEventListener("input", e => { state.memo = e.target.value; save(); });
+
+/* ---------- 캠핑 기록 ---------- */
+function renderRecords(){
+  const yr = String(new Date().getFullYear());
+  const nights = records.reduce((s,r) => s + (Number(r.nights)||0), 0);
+  document.getElementById("stats").innerHTML = [
+    [records.length, "모든 캠핑"], [records.filter(r => (r.date||"").startsWith(yr)).length, yr+"년"], [nights, "모두 몇 박"]
+  ].map(([v,k]) => `<div class="stat"><div class="v">${v}</div><div class="k">${k}</div></div>`).join("");
+
+  const cnt = {};
+  records.forEach(r => (r.missed||[]).forEach(m => { cnt[m] = (cnt[m]||0) + 1; }));
+  const top = Object.entries(cnt).filter(([,c]) => c >= 2).sort((a,b) => b[1]-a[1]).slice(0,4);
+  document.getElementById("often").innerHTML = top.length
+    ? `자주 안 챙긴 항목: ${top.map(([m,c]) => `<b>${esc(m)}</b> ${c}번`).join(" · ")} — 필요 없으면 목록에서 빼도 좋아요.`
+    : "";
+
+  const ol = document.getElementById("records");
+  if (!records.length){
+    ol.innerHTML = `<li class="no-rec">아직 기록이 없어요. 캠핑을 다녀오면 왼쪽 버튼으로 날짜별로 남겨 두세요.</li>`;
+    return;
+  }
+  ol.innerHTML = records.map(r => `<li><details>
+    <summary><span class="rdate">${esc((r.date||"날짜 없음").replace(/-/g,"."))}</span>
+      <span class="rplace">${esc(r.place || "캠핑장 미입력")}</span>
+      <span class="rmeta">${r.nights?esc(r.nights)+"박 · ":""}${r.temp?esc(r.temp)+" · ":""}챙김 ${r.got}/${r.total}</span></summary>
+    <div class="rbody">
+      ${r.memo?`<p><b>메모</b> ${esc(r.memo)}</p>`:""}
+      ${r.missed && r.missed.length ? `<p><b>안 챙긴 항목</b> ${esc(r.missed.join(", "))}</p>` : "<p>목록을 모두 챙겼어요.</p>"}
+      <span id="rd-${esc(r.id)}"><button class="link warn rdel" data-id="${esc(r.id)}">이 기록 삭제</button></span>
+    </div></details></li>`).join("");
+}
+document.getElementById("records").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const id = b.dataset.id;
+  if (b.classList.contains("rdel")){
+    document.getElementById("rd-"+id).innerHTML = `<span class="confirm">삭제할까요? <button class="yes rdel-yes" data-id="${esc(id)}">삭제</button><button class="rdel-no" data-id="${esc(id)}">취소</button></span>`;
+  } else if (b.classList.contains("rdel-no")){
+    renderRecords();
+  } else if (b.classList.contains("rdel-yes")){
+    b.disabled = true;
+    call("deleteRecord", id).then(l => { records = l; renderRecords(); })
+      .catch(() => { b.disabled = false; setSync("기록을 지우지 못했어요. 잠시 뒤 다시 해 보세요.", "err"); });
+  }
+});
+
+const msg = document.getElementById("recMsg");
+document.getElementById("saveRec").addEventListener("click", () => {
+  const btn = document.getElementById("saveRec");
+  msg.className = "msg";
+  if (!state.trip.start){
+    msg.className = "msg err"; msg.textContent = "맨 위 출발일을 먼저 넣어 주세요.";
+    document.getElementById("tripStart").focus(); return;
+  }
+  const packed = [], missed = [];
+  state.zones.forEach(z => {
+    if (z.tag === "car" && !state.f.car) return;
+    z.items.forEach(i => { if (!state.f.cold && i.c) return; (state.checked[i.id] ? packed : missed).push(i.t); });
+  });
+  const rec = {date:state.trip.start, nights:state.trip.nights||"", place:state.trip.place||"", temp:state.trip.temp||"",
+    memo:state.memo||"", got:packed.length, total:packed.length+missed.length, packed, missed};
+  btn.disabled = true; btn.textContent = "기록하는 중…";
+  call("saveRecord", rec).then(l => {
+    records = l; renderRecords();
+    btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
+    msg.innerHTML = `${esc(rec.date.replace(/-/g,"."))} 기록을 ${SHEET?"시트에 ":""}남겼어요. 다음 캠핑 준비로 비울까요?
+      <span class="confirm"><button class="yes" id="clearYes">체크·메모 비우기</button><button id="clearNo">그대로 두기</button></span>`;
+  }).catch(() => {
+    btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
+    msg.className = "msg err"; msg.textContent = "기록하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.";
+  });
+});
+msg.addEventListener("click", e => {
+  if (e.target.id === "clearYes"){
+    state.memo = ""; state.trip = {}; save(); clearChecks(); fillTrip(); render();
+    msg.textContent = "비웠어요. 다음 캠핑도 즐겁게!";
+  } else if (e.target.id === "clearNo"){ msg.textContent = ""; }
+});
+
+/* ---------- 불러오기 · 함께 쓰는 사람 변경 받아오기 ---------- */
+const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); };
+function isTyping(){
+  const a = document.activeElement;
+  return editing || (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox")));
+}
+function load(first){
+  return call("getData").then(d => {
+    if (SHEET){
+      if (d.settings){ applySettings(d.settings); lsSet(KEY, JSON.stringify(state)); }
+      else if (first){ track(req("saveSettings", {settings:settingsJson(true), withChecked:true}), "구글 시트와 연결됨 · 이 기기의 목록을 시트에 올렸어요"); }
+      if (first || !isTyping()){ fillTrip(); render(); }
+    }
+    records = d.records || []; renderRecords();
+    if (SHEET && !pending) setSync("구글 시트와 연결됨 · " + hhmm() + " 기준", "ok");
+    if (!SHEET) setSync("시트에 연결하지 않아 이 기기에만 저장돼요.");
+  });
+}
+function refresh(){
+  if (SHEET && document.visibilityState === "visible" && !pending && !saveTimer && !isTyping()) load(false).catch(() => {});
+}
+setInterval(refresh, 20000);
+document.addEventListener("visibilitychange", refresh);
+
+/* ---------- 시트 연결 설정 ---------- */
+const connEl = document.getElementById("conn"), connMsg = document.getElementById("connMsg");
+function shareLink(){
+  return location.origin + location.pathname + "?api=" + encodeURIComponent(conn.api) + "&key=" + encodeURIComponent(conn.key || "");
+}
+function updateConnUI(){
+  document.getElementById("connApi").value = conn.api || "";
+  document.getElementById("connKey").value = conn.key || "";
+  document.getElementById("shareBox").hidden = !SHEET;
+  if (SHEET) document.getElementById("shareLink").value = shareLink();
+  document.getElementById("connBtn").textContent = SHEET ? "시트 연결 설정" : "시트 연결하기";
+}
+document.getElementById("connBtn").addEventListener("click", () => {
+  connEl.hidden = !connEl.hidden;
+  if (!connEl.hidden){ updateConnUI(); connEl.scrollIntoView({behavior:"smooth", block:"start"}); document.getElementById("connApi").focus(); }
+});
+document.getElementById("connSave").addEventListener("click", () => {
+  const api = document.getElementById("connApi").value.trim(), key = document.getElementById("connKey").value;
+  connMsg.className = "msg";
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(api)){
+    connMsg.className = "msg err"; connMsg.textContent = "웹 앱 주소는 https://script.google.com/ 으로 시작하고 /exec 로 끝나야 해요."; return;
+  }
+  const before = conn, btn = document.getElementById("connSave");
+  conn = {api, key}; btn.disabled = true; connMsg.textContent = "연결해 보는 중…";
+  req("get").then(() => {
+    lsSet(CKEY, JSON.stringify(conn)); SHEET = true;
+    connMsg.className = "msg"; connMsg.textContent = "연결됐어요. 이제 이 기기도 시트에 함께 저장돼요.";
+    updateConnUI(); return load(true);
+  }).catch(err => {
+    conn = before;
+    connMsg.className = "msg err"; connMsg.textContent = "연결하지 못했어요. " + (err && err.message || "주소와 배포 설정(액세스: 모든 사용자)을 확인해 주세요.");
+  }).finally(() => { btn.disabled = false; });
+});
+document.getElementById("connOff").addEventListener("click", () => {
+  conn = {}; SHEET = false; lsSet(CKEY, "{}");
+  connMsg.className = "msg"; connMsg.textContent = "연결을 끊었어요. 이제 이 기기에만 저장돼요.";
+  updateConnUI(); setSync("시트에 연결하지 않아 이 기기에만 저장돼요.");
+});
+document.getElementById("copyShare").addEventListener("click", () => {
+  const inp = document.getElementById("shareLink");
+  const fallback = () => { inp.select(); connMsg.className = "msg"; connMsg.textContent = "링크를 선택해 두었어요. 길게 눌러 복사하세요."; };
+  try{
+    navigator.clipboard.writeText(inp.value).then(() => { connMsg.className = "msg"; connMsg.textContent = "링크를 복사했어요. 카톡으로 보내 주세요."; }, fallback);
+  }catch(e){ fallback(); }
+});
+
+/* ---------- 시작 ---------- */
+fillTrip(); render(); updateConnUI();
+setSync(SHEET ? "구글 시트에서 불러오는 중…" : "시트에 연결하지 않아 이 기기에만 저장돼요.");
+load(true).catch(err => {
+  renderRecords();
+  setSync("시트에서 불러오지 못했어요. 지금 화면은 이 기기에 남은 내용이에요. (" + (err && err.message || "연결 오류") + ")", "err");
+});
+</script>
+</body>
+</html>
