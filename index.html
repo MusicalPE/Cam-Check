@@ -136,6 +136,10 @@ body.hide-done li.on{display:none}
 .pen:hover,.pen:focus-visible{opacity:1;color:var(--accent);background:var(--accent-soft)}
 li:hover .pen{opacity:.9}
 @media (hover:none){.pen{opacity:.75}}
+.trash:hover,.trash:focus-visible{color:var(--danger);background:transparent}
+li .pen + .trash{margin-left:-6px}
+.askdel{background:var(--accent-soft);border-radius:8px;padding:6px 8px!important;flex-wrap:wrap}
+.askdel .txt{flex:1;min-width:0;font-weight:600}
 .pen-z{width:26px;height:26px;margin-left:4px;vertical-align:2px}
 .qrow{padding:5px 0}
 .qedit{display:flex;gap:6px;flex:1;min-width:0;flex-wrap:wrap}
@@ -480,6 +484,8 @@ function countAll(){
 
 const PENCIL = '<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><path d="M13.6 3.2a1.6 1.6 0 0 1 2.3 0l.9.9a1.6 1.6 0 0 1 0 2.3L7.4 15.8l-3.6.9.9-3.6z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12.2 4.6l3.2 3.2" stroke="currentColor" stroke-width="1.6"/></svg>';
 let quick = null; // 지금 연필로 고치는 것: {type:"item"|"zone", id}
+let askDel = null; // 휴지통을 눌러 한 번 더 묻는 중인 항목 id
+const TRASH = '<svg viewBox="0 0 20 20" width="15" height="15" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M5.5 6l.8 10h7.4l.8-10M8.5 9v4.5M11.5 9v4.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
 function itemRow(z, i){
   if (quick && quick.type === "item" && quick.id === i.id){
@@ -489,13 +495,17 @@ function itemRow(z, i){
       <div class="qlabels"><span>상황</span>${labelToggles(z, i)}</div>
       <div class="qlabels qplace"><span>순서</span><span class="qmove"><button type="button" class="qup" data-z="${z.id}" data-i="${i.id}" aria-label="위로 옮기기" title="위로">▲</button><button type="button" class="qdown" data-z="${z.id}" data-i="${i.id}" aria-label="아래로 옮기기" title="아래로">▼</button></span>
         <select class="qzsel" data-z="${z.id}" data-i="${i.id}" aria-label="다른 구역으로 옮기기">${state.zones.map(x => `<option value="${x.id}" ${x.id===z.id?"selected":""}>${x.id===z.id?"구역: ":"→ "}${esc(x.name)}</option>`).join("")}</select></div>
-      <button type="button" class="qdel" data-z="${z.id}" data-i="${i.id}">빼기</button>
       <button type="button" class="qcancel" aria-label="고치기 취소">취소</button></form></li>`;
+  }
+  if (askDel === i.id){
+    return `<li class="askdel"><span class="txt">${esc(i.t)}</span><span class="confirm">목록에서 뺄까요?
+      <button class="yes tyes" data-z="${z.id}" data-i="${i.id}">빼기</button><button class="tno">취소</button></span></li>`;
   }
   return `<li class="${state.checked[i.id]?"on":""}">
     <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span></label>
     ${badges(i.g, "tag")}
-    <button class="pen" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 고치기" title="고치기">${PENCIL}</button></li>`;
+    <button class="pen" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 고치기" title="고치기">${PENCIL}</button>
+    <button class="pen trash" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 빼기" title="빼기">${TRASH}</button></li>`;
 }
 
 function zoneView(z){
@@ -600,7 +610,15 @@ grid.addEventListener("input", e => {
 });
 grid.addEventListener("click", e => {
   const t = e.target.closest("button"); if (!t) return;
-  if (t.classList.contains("pen")){ e.preventDefault(); openQuick(t.dataset.i ? "item" : "zone", t.dataset.i || t.dataset.z); return; }
+  if (t.classList.contains("trash")){ askDel = t.dataset.i; quick = null; render(); const y = document.querySelector(".tno"); if (y) y.focus(); return; }
+  if (t.classList.contains("tno")){ const id = askDel; askDel = null; render(); const b = document.querySelector(`.trash[data-i="${id}"]`); if (b) b.focus(); return; }
+  if (t.classList.contains("tyes")){
+    const qz = findZone(t.dataset.z);
+    qz.items = qz.items.filter(i => i.id !== t.dataset.i);
+    if (state.checked[t.dataset.i]){ delete state.checked[t.dataset.i]; setCheck(t.dataset.i, false); }
+    askDel = null; save(); render(); return;
+  }
+  if (t.classList.contains("pen")){ askDel = null; e.preventDefault(); openQuick(t.dataset.i ? "item" : "zone", t.dataset.i || t.dataset.z); return; }
   if (t.classList.contains("qcancel")){ closeQuick(); return; }
   if (t.classList.contains("qup") || t.classList.contains("qdown")){ moveThing(t.dataset.z, t.dataset.i, t.classList.contains("qup") ? -1 : 1); return; }
   if (t.classList.contains("qdel")){
