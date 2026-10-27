@@ -1,6 +1,6 @@
 캠첵! — 파이어베이스 준비 (처음 한 번만)
 
-캠첵! 주소: https://musicalpe.github.io/camping/
+캠첵! 주소: https://musicalpe.github.io/CampCheck/
 
 
 [1] 프로젝트 만들기
