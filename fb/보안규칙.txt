@@ -36,5 +36,25 @@ service cloud.firestore {
           && request.auth.uid in get(/databases/$(database)/documents/families/$(fid)).data.members;
       }
     }
+
+    // 캠핑장 별점 나누기: 로그인한 사람은 누구나 볼 수 있고, 가족마다 한 표만 씀
+    // (가족 이름·이메일은 올라가지 않고, 별점과 다녀온 횟수만 올라감)
+    match /campsites/{pid} {
+      allow read: if signedIn();
+      allow write: if signedIn() && pid.matches('k[0-9]+')
+        && request.resource.data.keys().hasOnly(['name', 'addr', 'url', 'updatedAt']);
+
+      match /ratings/{fid} {
+        function isFamily() {
+          return signedIn() && request.auth.uid in get(/databases/$(database)/documents/families/$(fid)).data.members;
+        }
+        allow read: if signedIn();
+        allow create, update: if isFamily()
+          && request.resource.data.keys().hasOnly(['stars', 'visits', 'updatedAt'])
+          && request.resource.data.stars is number
+          && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
+        allow delete: if isFamily();
+      }
+    }
   }
 }

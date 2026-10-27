@@ -62,7 +62,41 @@ async function start(){
   }catch(e){ db = F.getFirestore(app); }
 
   let me = null, unsubs = [], fid = null;
-  const stop = () => { unsubs.forEach(u => { try{ u(); }catch(e){} }); unsubs = []; fid = null; };
+  const stop = () => { unsubs.forEach(u => { try{ u(); }catch(e){} }); unsubs = []; fid = null; delete window.COMMUNITY; };
+
+  /* 다른 캠퍼들과 나누는 캠핑장 별점: campsites/{카카오 장소ID}/ratings/{가족ID}
+     가족마다 한 표(그 가족 기록들의 평균). 이름·이메일은 올리지 않음 */
+  function community(famId){
+    const stats = {}, asking = {};
+    const ref = pid => F.collection(db, "campsites", pid, "ratings");
+    async function fetchStat(pid){
+      if (asking[pid]) return asking[pid];
+      asking[pid] = F.getAggregateFromServer(ref(pid), { avg: F.average("stars"), n: F.count() })
+        .then(a => { const d = a.data(); stats[pid] = { n: d.n || 0, avg: d.n ? Math.round(d.avg * 10) / 10 : 0 }; })
+        .catch(() => { stats[pid] = { n: 0, avg: 0 }; })
+        .finally(() => { delete asking[pid]; });
+      return asking[pid];
+    }
+    return {
+      stat: pid => stats[pid],
+      want(pids, cb){
+        const need = [...new Set(pids)].filter(p => /^k\d+$/.test(p) && !(p in stats));
+        if (!need.length){ cb && cb(); return; }
+        Promise.all(need.map(fetchStat)).then(() => { window.refreshCamperText && window.refreshCamperText(); cb && cb(); });
+      },
+      async publish(pid, info, stars, visits){
+        if (!/^k\d+$/.test(pid)) return;
+        try{
+          await F.setDoc(F.doc(db, "campsites", pid), { name: info.name || "", addr: info.addr || "", url: info.url || "", updatedAt: F.serverTimestamp() }, { merge: true });
+          const mine = F.doc(db, "campsites", pid, "ratings", famId);
+          if (stars > 0) await F.setDoc(mine, { stars: Math.round(stars * 10) / 10, visits: visits || 1, updatedAt: F.serverTimestamp() });
+          else await F.deleteDoc(mine);
+        }catch(e){ console.warn("별점 나누기 실패", e); }
+        delete stats[pid]; await fetchStat(pid);
+        window.refreshCamperText && window.refreshCamperText();
+      }
+    };
+  }
 
   window.FBAPP = {
     async login(){
@@ -120,8 +154,10 @@ async function start(){
       check: (itemId, on) => F.updateDoc(fref, new F.FieldPath("checked", itemId), on ? true : F.deleteField()).catch(e => { throw friendly(e); }),
       clearChecks: () => F.updateDoc(fref, { checked: {} }).catch(e => { throw friendly(e); }),
       addRecord: rec => F.addDoc(col, Object.assign({}, rec, { by: me.uid, createdAt: F.serverTimestamp() })).catch(e => { throw friendly(e); }),
-      deleteRecord: rid => F.deleteDoc(F.doc(col, rid)).catch(e => { throw friendly(e); })
+      deleteRecord: rid => F.deleteDoc(F.doc(col, rid)).catch(e => { throw friendly(e); }),
+      updateRecord: (rid, fields) => F.updateDoc(F.doc(col, rid), fields).catch(e => { throw friendly(e); })
     };
+    window.COMMUNITY = community(id);
     let first = true;
     unsubs.push(F.onSnapshot(fref, { includeMetadataChanges: true }, snap => {
       if (!snap.exists()){ leave("가족 공간이 없어졌어요."); return; }

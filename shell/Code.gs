@@ -10,7 +10,7 @@ const SECRET = '여기에-비밀코드-입력';
 
 const SHEET_RECORD = '캠핑기록';
 const SHEET_SETTING = '설정';
-const HEADER = ['출발일', '박', '캠핑장', '최저기온', '메모', '챙긴 수', '전체 수', '챙긴 항목', '안 챙긴 항목', '저장 시각', '기록ID'];
+const HEADER = ['출발일', '박', '캠핑장', '최저기온', '메모', '챙긴 수', '전체 수', '챙긴 항목', '안 챙긴 항목', '저장 시각', '기록ID', '우리 별점', '주소', '장소 링크', '장소ID'];
 
 const APP_URL = 'https://musicalpe.github.io/camping/';
 
@@ -59,6 +59,8 @@ function doPost(e) {
         return json_({ ok: true, records: saveRecord_(req.rec || {}) });
       case 'deleteRecord':
         return json_({ ok: true, records: deleteRecord_(req.id) });
+      case 'updateRecord':
+        return json_({ ok: true, records: updateRecord_(req.id, req.rating) });
       default:
         return json_({ ok: false, error: '모르는 요청이에요.' });
     }
@@ -76,6 +78,10 @@ function json_(obj) {
 function sheet_(name, header) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   let sh = ss.getSheetByName(name);
+  if (sh && header && sh.getLastColumn() < header.length) {   // 예전 시트에 새 칸(별점 등) 제목 붙이기
+    sh.getRange(1, 1, 1, header.length).setValues([header])
+      .setFontWeight('bold').setBackground('#2F4A36').setFontColor('#ffffff');
+  }
   if (!sh) {
     sh = ss.insertSheet(name);
     if (header) {
@@ -158,7 +164,11 @@ function getRecords_() {
       packed: split_(r[7]),
       missed: split_(r[8]),
       saved: fmt_(r[9], 'yyyy-MM-dd HH:mm'),
-      id: String(r[10])
+      id: String(r[10]),
+      rating: Number(r[11]) || '',
+      addr: fmt_(r[12]),
+      placeUrl: fmt_(r[13]),
+      placeId: fmt_(r[14])
     }))
     .sort((a, b) => (b.date + b.saved).localeCompare(a.date + a.saved));
 }
@@ -172,11 +182,23 @@ function saveRecord_(r) {
   sh.appendRow([
     date, Number(r.nights) || '', r.place || '', r.temp || '', r.memo || '',
     r.got || 0, r.total || 0, (r.packed || []).join(', '), (r.missed || []).join(', '),
-    new Date(), Utilities.getUuid().slice(0, 8)
+    new Date(), Utilities.getUuid().slice(0, 8),
+    Number(r.rating) || '', r.addr || '', r.placeUrl || '', r.placeId || ''
   ]);
   const row = sh.getLastRow();
   sh.getRange(row, 1).setNumberFormat('yyyy-mm-dd');
   sh.getRange(row, 10).setNumberFormat('yyyy-mm-dd hh:mm');
+  return getRecords_();
+}
+function updateRecord_(id, rating) {
+  const sh = sheet_(SHEET_RECORD, HEADER);
+  const last = sh.getLastRow();
+  if (last >= 2) {
+    const ids = sh.getRange(2, 11, last - 1, 1).getValues();
+    for (let i = 0; i < ids.length; i++) {
+      if (String(ids[i][0]) === String(id)) { sh.getRange(i + 2, 12).setValue(Number(rating) || ''); break; }
+    }
+  }
   return getRecords_();
 }
 function deleteRecord_(id) {

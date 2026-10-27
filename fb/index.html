@@ -238,6 +238,29 @@ ul.items{min-height:6px}
 .fam .row .field{flex:1 1 200px;min-width:0}
 .members{display:flex;gap:6px;flex-wrap:wrap}
 .member{font-size:12px;border-radius:99px;padding:2px 9px;background:var(--accent-soft);color:var(--accent);font-weight:600}
+.place-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0;position:relative}
+.place-list{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:30;list-style:none;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.16);max-height:320px;overflow-y:auto}
+.place-list li{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;cursor:pointer;border:none}
+.place-list li[aria-selected="true"],.place-list li:hover{background:var(--accent-soft)}
+.place-list .pn{font-size:14px;color:var(--ink);font-weight:600}
+.place-list .pa{font-size:12px;color:var(--muted)}
+.place-list .pb{font-size:11px;color:var(--accent);font-weight:600}
+.place-list .phead{font-size:11px;color:var(--muted);padding:6px 10px 2px;cursor:default;background:transparent!important}
+.place-links{display:flex;gap:10px;font-size:12px;min-height:0}
+.place-links a{color:var(--forest);text-underline-offset:3px}
+.stars{display:inline-flex;gap:2px}
+.star{border:none;background:none;padding:2px;cursor:pointer;color:var(--line);font-size:24px;line-height:1}
+.star[aria-pressed="true"]{color:#E7A93E}
+.star:hover{color:#E7A93E}
+.stars.sm .star{font-size:20px}
+.rate-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:13px;color:var(--muted)}
+.rstar{color:#C98A1E;font-weight:600;white-space:nowrap}
+.ranking{margin-top:16px;display:flex;flex-direction:column;gap:6px}
+.ranking h3{font-size:14px;margin:0;color:var(--ink);font-weight:700}
+.ranking ol{margin:0;padding-left:20px;font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
+.ranking ol b{color:var(--ink);font-weight:600}
+.camper{font-size:12px;color:var(--muted)}
+.camper b{color:#C98A1E}
 footer{font-size:12px;color:var(--muted);text-align:center}
 
 @media (max-width:720px){
@@ -268,7 +291,10 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     <div class="trip">
       <label>출발일<input class="field" id="tripStart" type="date"></label>
       <label>몇 박<input class="field" id="tripNights" type="number" min="0" max="30" inputmode="numeric" placeholder="1"></label>
-      <label>캠핑장<input class="field" id="tripPlace" type="text" placeholder="예: 숲속 오토캠핑장 A-12"></label>
+      <div class="place-field"><label for="tripPlace">캠핑장</label>
+        <input class="field" id="tripPlace" type="text" placeholder="캠핑장 이름을 치면 찾아 줘요" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="placeList">
+        <ul class="place-list" id="placeList" role="listbox" hidden></ul>
+        <span class="place-links" id="placeLinks"></span></div>
       <label>예상 최저기온<input class="field" id="tripTemp" type="text" placeholder="예: 3℃"></label>
     </div>
   </header>
@@ -314,11 +340,13 @@ footer{font-size:12px;color:var(--muted);text-align:center}
       <div class="sync-row"><span class="sync" id="sync">불러오는 중…</span></div>
       <div class="stats" id="stats"></div>
       <div class="log-form">
+        <div class="rate-row"><span>이번 캠핑장 우리 별점</span><span class="stars" id="tripStars"></span></div>
         <textarea id="memo" placeholder="한 줄 메모: 날씨, 좋았던 점, 다음에 챙길 것"></textarea>
         <button class="primary" id="saveRec">이번 캠핑 기록하기</button>
         <div class="msg" id="recMsg" aria-live="polite"></div>
       </div>
       <div class="often" id="often"></div>
+      <div class="ranking" id="ranking"></div>
     </div>
     <ol class="records" id="records"></ol>
   </section>
@@ -337,6 +365,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
   </div>
 </div>
 
+<script src="../kakao-config.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <script>
@@ -407,7 +436,8 @@ const local = {
     l.push(Object.assign({}, rec, {id:uid(), saved:nowText()}));
     lsSet(RKEY, JSON.stringify(l)); return sortRecs(l);
   },
-  deleteRecord(id){ const l = local.getData().records.filter(r => r.id !== id); lsSet(RKEY, JSON.stringify(l)); return l; }
+  deleteRecord(id){ const l = local.getData().records.filter(r => r.id !== id); lsSet(RKEY, JSON.stringify(l)); return l; },
+  updateRecord(a){ const l = local.getData().records.map(r => r.id === a.id ? Object.assign({}, r, {rating:a.rating}) : r); lsSet(RKEY, JSON.stringify(l)); return sortRecs(l); }
 };
 function nowText(){ const d = new Date(), p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
 async function call(fn, arg){
@@ -415,6 +445,7 @@ async function call(fn, arg){
   if (fn === "getData") return {settings:"", records};
   if (fn === "saveRecord"){ await REMOTE.addRecord(Object.assign({}, arg, {saved:nowText()})); return records; }
   if (fn === "deleteRecord"){ await REMOTE.deleteRecord(arg); return records.filter(r => r.id !== arg); }
+  if (fn === "updateRecord"){ await REMOTE.updateRecord(arg.id, {rating:arg.rating}); return records.map(r => r.id === arg.id ? Object.assign({}, r, {rating:arg.rating}) : r); }
 }
 let pending = 0;
 function track(p){
@@ -812,9 +843,156 @@ const TRIP = {tripStart:"start", tripNights:"nights", tripPlace:"place", tripTem
 function fillTrip(){
   Object.entries(TRIP).forEach(([id,k]) => { document.getElementById(id).value = state.trip[k] || ""; });
   document.getElementById("memo").value = state.memo || "";
+  renderTripStars(); renderPlaceLinks();
 }
 Object.entries(TRIP).forEach(([id,k]) => document.getElementById(id).addEventListener("input", e => { state.trip[k] = e.target.value; save(); }));
 document.getElementById("memo").addEventListener("input", e => { state.memo = e.target.value; save(); });
+
+/* ---------- 캠핑장 찾기 · 우리 별점 ---------- */
+function starsHTML(v, attrs, size){
+  return `<span class="stars ${size||""}" role="group" aria-label="별점">${[1,2,3,4,5].map(n =>
+    `<button type="button" class="star" ${attrs} data-v="${n}" aria-pressed="${n <= v}" aria-label="별 ${n}개">★</button>`).join("")}</span>`;
+}
+function placeLinksHTML(name, url){
+  const q = encodeURIComponent(name || "");
+  return `<a href="${esc(url || "https://map.kakao.com/link/search/" + q)}" target="_blank" rel="noopener">카카오맵</a> · <a href="https://map.naver.com/p/search/${q}" target="_blank" rel="noopener">네이버 지도</a>`;
+}
+/* 다녀온 곳마다 우리 평균 별점 */
+function placeKey(r){ return r.placeId || String(r.place || "").trim(); }
+function ourPlaces(){
+  const m = {};
+  records.forEach(r => {
+    const k = placeKey(r); if (!k) return;
+    const p = m[k] || (m[k] = {key:k, name:r.place, addr:r.addr||"", url:r.placeUrl||"", id:r.placeId||"", visits:0, sum:0, rated:0, last:""});
+    p.visits++; if (Number(r.rating)){ p.sum += Number(r.rating); p.rated++; }
+    if ((r.date||"") > p.last){ p.last = r.date || ""; p.name = r.place; }
+  });
+  return Object.values(m).map(p => Object.assign(p, {avg: p.rated ? Math.round(p.sum / p.rated * 10) / 10 : 0}));
+}
+function renderRanking(){
+  const list = ourPlaces().filter(p => p.avg).sort((a,b) => b.avg - a.avg || b.visits - a.visits).slice(0,5);
+  document.getElementById("ranking").innerHTML = list.length ? `<h3>우리 캠핑장 순위</h3><ol>${list.map(p =>
+    `<li><b>${esc(p.name)}</b> <span class="rstar">★${p.avg}</span> · ${p.visits}번 다녀옴</li>`).join("")}</ol>` : "";
+}
+function camperText(pid){
+  const c = window.COMMUNITY && COMMUNITY.stat(pid);
+  if (!window.COMMUNITY) return "";
+  if (!c) return "다른 캠퍼 별점 불러오는 중…";
+  return c.n ? `이 앱을 쓰는 캠퍼들 별점 <b>★${c.avg}</b> (${c.n}가족)` : "아직 다른 캠퍼 별점이 없어요.";
+}
+function refreshCamperText(){
+  document.querySelectorAll("[data-cpid]").forEach(el => { el.innerHTML = camperText(el.dataset.cpid); });
+}
+/* 우리 가족 별점을 다른 캠퍼들과 나눔(가족판에서만, 카카오에서 고른 캠핑장만) */
+function publishRating(pid){
+  if (!window.COMMUNITY || !pid) return;
+  const mine = records.filter(r => r.placeId === pid);
+  const rated = mine.filter(r => Number(r.rating));
+  const r0 = mine[0] || {};
+  COMMUNITY.publish(pid, {name:r0.place||"", addr:r0.addr||"", url:r0.placeUrl||""},
+    rated.length ? rated.reduce((s,r) => s + Number(r.rating), 0) / rated.length : 0, mine.length);
+}
+
+/* 이번 캠핑 별점 */
+function renderTripStars(){ document.getElementById("tripStars").innerHTML = starsHTML(Number(state.trip.rating)||0, 'data-trip="1"'); }
+document.getElementById("tripStars").addEventListener("click", e => {
+  const b = e.target.closest(".star"); if (!b) return;
+  const v = Number(b.dataset.v);
+  state.trip.rating = Number(state.trip.rating) === v ? "" : v;
+  save(); renderTripStars();
+});
+/* 기록 별점은 나중에도 고칠 수 있음 */
+document.getElementById("records").addEventListener("click", e => {
+  const b = e.target.closest(".star[data-rid]"); if (!b) return;
+  e.preventDefault();
+  const id = b.dataset.rid, r = records.find(x => x.id === id); if (!r) return;
+  const v = Number(r.rating) === Number(b.dataset.v) ? "" : Number(b.dataset.v);
+  const open = [...document.querySelectorAll("#records details[open]")].map(d => d.querySelector(".star[data-rid]")?.dataset.rid);
+  r.rating = v; renderRecords(); reopen(open);
+  call("updateRecord", {id, rating:v}).then(l => {
+    if (l) { records = l; renderRecords(); reopen(open); }
+    if (r.placeId) publishRating(r.placeId);
+  }).catch(() => setSync("별점을 저장하지 못했어요. 잠시 뒤 다시 해 보세요.", "err"));
+});
+function reopen(ids){ ids.forEach(id => { const s = document.querySelector(`#records .star[data-rid="${id}"]`); if (s) s.closest("details").open = true; }); }
+
+/* 캠핑장 이름 칸: 다녀온 곳 + 카카오 장소 검색 */
+const placeInput = document.getElementById("tripPlace"), placeList = document.getElementById("placeList");
+let kakaoPlaces = null, placeTimer = null, placeItems = [], placeSel = -1, placeSeq = 0;
+function loadKakao(){
+  if (kakaoPlaces !== null) return Promise.resolve(kakaoPlaces);
+  const key = (window.KAKAO_JS_KEY || "").trim();
+  if (!key){ kakaoPlaces = false; return Promise.resolve(false); }
+  return new Promise(res => {
+    const sc = document.createElement("script");
+    sc.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(key) + "&libraries=services&autoload=false";
+    sc.onload = () => { try{ kakao.maps.load(() => { kakaoPlaces = new kakao.maps.services.Places(); res(kakaoPlaces); }); }catch(e){ kakaoPlaces = false; res(false); } };
+    sc.onerror = () => { kakaoPlaces = false; res(false); };
+    document.head.appendChild(sc);
+  });
+}
+function renderPlaceLinks(){
+  const name = (state.trip.place || "").trim(), p = state.trip.pinfo;
+  document.getElementById("placeLinks").innerHTML = name ? (p && p.addr ? esc(p.addr) + " · " : "") + placeLinksHTML(name, p && p.url) : "";
+}
+function closePlaces(){ placeList.hidden = true; placeInput.setAttribute("aria-expanded", "false"); placeSel = -1; }
+function showPlaces(){
+  if (!placeItems.length){ closePlaces(); return; }
+  let html = "", lastGroup = "";
+  placeItems.forEach((p, i) => {
+    if (p.group !== lastGroup){ html += `<li class="phead" role="presentation">${p.group}</li>`; lastGroup = p.group; }
+    const camper = p.id && window.COMMUNITY ? COMMUNITY.stat(p.id) : null;
+    const badge = [p.ours ? `우리 ★${p.ours} · ${p.visits}번` : (p.visits ? `${p.visits}번 다녀옴` : ""),
+      camper && camper.n ? `캠퍼들 ★${camper.avg} (${camper.n})` : ""].filter(Boolean).join(" · ");
+    html += `<li role="option" id="po-${i}" data-i="${i}" aria-selected="${i === placeSel}"><span class="pn">${esc(p.name)}</span>${p.addr?`<span class="pa">${esc(p.addr)}</span>`:""}${badge?`<span class="pb">${badge}</span>`:""}</li>`;
+  });
+  placeList.innerHTML = html; placeList.hidden = false; placeInput.setAttribute("aria-expanded", "true");
+}
+function searchPlaces(){
+  const q = placeInput.value.trim(), seq = ++placeSeq;
+  if (!q){ placeItems = []; closePlaces(); return; }
+  const ql = q.toLowerCase();
+  const mine = ourPlaces().filter(p => (p.name||"").toLowerCase().includes(ql))
+    .sort((a,b) => b.visits - a.visits).slice(0,4)
+    .map(p => ({group:"다녀온 곳", name:p.name, addr:p.addr, url:p.url, id:p.id, ours:p.avg, visits:p.visits}));
+  placeItems = mine; placeSel = -1; showPlaces();
+  if (q.length < 2) return;
+  loadKakao().then(ps => {
+    if (!ps || seq !== placeSeq) return;
+    ps.keywordSearch(q, (data, status) => {
+      if (seq !== placeSeq || status !== kakao.maps.services.Status.OK) return;
+      const known = new Set(mine.map(p => p.id).filter(Boolean));
+      const found = data.filter(d => !known.has("k" + d.id)).slice(0, 6).map(d => {
+        const op = ourPlaces().find(p => p.id === "k" + d.id);
+        return {group:"카카오 장소 검색", name:d.place_name, addr:d.road_address_name || d.address_name, url:d.place_url, id:"k" + d.id, ours:op ? op.avg : 0, visits:op ? op.visits : 0};
+      });
+      placeItems = mine.concat(found); showPlaces();
+      if (window.COMMUNITY) COMMUNITY.want(found.map(p => p.id), () => { if (!placeList.hidden) showPlaces(); });
+    }, {size: 10});
+  });
+}
+function pickPlace(i){
+  const p = placeItems[i]; if (!p) return;
+  state.trip.place = p.name;
+  state.trip.pinfo = p.id || p.addr || p.url ? {id:p.id||"", addr:p.addr||"", url:p.url||""} : null;
+  placeInput.value = p.name; save(); closePlaces(); renderPlaceLinks();
+}
+placeInput.addEventListener("input", () => {
+  state.trip.pinfo = null; renderPlaceLinks();
+  clearTimeout(placeTimer); placeTimer = setTimeout(searchPlaces, 280);
+});
+placeInput.addEventListener("focus", () => { if (placeInput.value.trim() && !state.trip.pinfo) searchPlaces(); });
+placeInput.addEventListener("keydown", e => {
+  if (placeList.hidden) return;
+  if (e.key === "ArrowDown" || e.key === "ArrowUp"){
+    e.preventDefault(); placeSel = (placeSel + (e.key === "ArrowDown" ? 1 : -1) + placeItems.length) % placeItems.length;
+    showPlaces(); placeInput.setAttribute("aria-activedescendant", "po-" + placeSel);
+  } else if (e.key === "Enter" && placeSel >= 0){ e.preventDefault(); pickPlace(placeSel); }
+  else if (e.key === "Escape"){ closePlaces(); }
+});
+placeList.addEventListener("mousedown", e => e.preventDefault());
+placeList.addEventListener("click", e => { const li = e.target.closest("li[data-i]"); if (li) pickPlace(Number(li.dataset.i)); });
+placeInput.addEventListener("blur", () => setTimeout(closePlaces, 120));
 
 /* ---------- 캠핑 기록 ---------- */
 function renderRecords(){
@@ -831,6 +1009,8 @@ function renderRecords(){
     ? `자주 안 챙긴 항목: ${top.map(([m,c]) => `<b>${esc(m)}</b> ${c}번`).join(" · ")} — 필요 없으면 목록에서 빼도 좋아요.`
     : "";
 
+  renderRanking();
+  if (window.COMMUNITY) COMMUNITY.want(records.map(r => r.placeId).filter(Boolean));
   const ol = document.getElementById("records");
   if (!records.length){
     ol.innerHTML = `<li class="no-rec">아직 기록이 없어요. 캠핑을 다녀오면 왼쪽 버튼으로 날짜별로 남겨 두세요.</li>`;
@@ -839,8 +1019,11 @@ function renderRecords(){
   ol.innerHTML = records.map(r => `<li><details>
     <summary><span class="rdate">${esc((r.date||"날짜 없음").replace(/-/g,"."))}</span>
       <span class="rplace">${esc(r.place || "캠핑장 미입력")}</span>
-      <span class="rmeta">${r.nights?esc(r.nights)+"박 · ":""}${r.temp?esc(r.temp)+" · ":""}챙김 ${r.got}/${r.total}</span></summary>
+      <span class="rmeta">${Number(r.rating)?`<span class="rstar">★${Number(r.rating)}</span> · `:""}${r.nights?esc(r.nights)+"박 · ":""}${r.temp?esc(r.temp)+" · ":""}챙김 ${r.got}/${r.total}</span></summary>
     <div class="rbody">
+      <div class="rate-row"><span>우리 별점</span>${starsHTML(Number(r.rating)||0, `data-rid="${esc(r.id)}"`, "sm")}</div>
+      ${r.place ? `<p>${r.addr?esc(r.addr)+" · ":""}${placeLinksHTML(r.place, r.placeUrl)}</p>` : ""}
+      ${r.placeId ? `<p class="camper" data-cpid="${esc(r.placeId)}">${camperText(r.placeId)}</p>` : ""}
       ${r.memo?`<p><b>메모</b> ${esc(r.memo)}</p>`:""}
       ${r.missed && r.missed.length ? `<p><b>안 챙긴 항목</b> ${esc(r.missed.join(", "))}</p>` : "<p>목록을 모두 챙겼어요.</p>"}
       <span id="rd-${esc(r.id)}"><button class="link warn rdel" data-id="${esc(r.id)}">이 기록 삭제</button></span>
@@ -871,9 +1054,11 @@ document.getElementById("saveRec").addEventListener("click", () => {
   const packed = [], missed = [];
   state.zones.forEach(z => { (shownItems(z) || []).forEach(i => (state.checked[i.id] ? packed : missed).push(i.t)); });
   const rec = {date:state.trip.start, nights:state.trip.nights||"", place:state.trip.place||"", temp:state.trip.temp||"",
-    memo:state.memo||"", got:packed.length, total:packed.length+missed.length, packed, missed};
+    memo:state.memo||"", got:packed.length, total:packed.length+missed.length, packed, missed,
+    rating:state.trip.rating||"", addr:(state.trip.pinfo&&state.trip.pinfo.addr)||"", placeUrl:(state.trip.pinfo&&state.trip.pinfo.url)||"", placeId:(state.trip.pinfo&&state.trip.pinfo.id)||""};
   btn.disabled = true; btn.textContent = "기록하는 중…";
   call("saveRecord", rec).then(l => {
+    if (rec.placeId) setTimeout(() => publishRating(rec.placeId), 1500);
     records = l; renderRecords();
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
     msg.innerHTML = `${esc(rec.date.replace(/-/g,"."))} 기록을 ${REMOTE?"가족 공간에 ":""}남겼어요. 다음 캠핑 준비로 비울까요?
