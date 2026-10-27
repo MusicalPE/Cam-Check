@@ -348,7 +348,13 @@ a.chip{text-decoration:none;display:inline-block}
   body{padding-bottom:calc(110px + env(safe-area-inset-bottom,0px))}
   body[data-tab="home"] .tabbed:not(.v-home),
   body[data-tab="log"] .tabbed:not(.v-log),
-  body[data-tab="set"] .tabbed:not(.v-set){display:none!important}
+  body[data-tab="set"] .tabbed:not(.v-set),
+  body[data-tab="meal"] .tabbed:not(.v-meal),
+  body[data-tab="fam"] .tabbed:not(.v-fam){display:none!important}
+  body[data-tab="fam"] #fam:not([hidden]){display:flex!important}
+  body[data-tab="fam"] #famTab{order:-3}
+  body[data-tab="meal"] .meals.folded .mbody{display:flex}
+  body[data-tab="meal"] .meals .mfold .chev{display:none}
   body[data-tab="set"] #labelPanel{display:flex!important}
   body[data-tab="set"] #lpClose{display:none}
   body[data-tab="set"] #fam:not([hidden]){display:flex!important}
@@ -377,17 +383,17 @@ a.chip{text-decoration:none;display:inline-block}
   .conn-foot{display:none}
   .toast{bottom:calc(104px + env(safe-area-inset-bottom,0px))}
   /* 아래 탭 */
-  .tabbar{display:grid;grid-template-columns:1fr auto 1fr;align-items:end;position:fixed;left:0;right:0;bottom:0;z-index:40;
+  .tabbar{display:grid;grid-template-columns:1fr 1fr auto 1fr 1fr;align-items:end;position:fixed;left:0;right:0;bottom:0;z-index:40;
     background:var(--surface);border-top:1.5px solid var(--line);box-shadow:0 -8px 25px rgba(34,48,42,.08);
     padding:8px max(12px,env(safe-area-inset-right,0px)) calc(10px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
   .tabbar button{border:none;background:none;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 0;color:var(--muted);font:inherit;font-size:11.5px;font-weight:700;cursor:pointer;transition:color .2s}
   .tabbar svg{width:26px;height:26px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
   .tabbar button[aria-current="page"]{color:var(--forest)}
-  .tabbar button:not(.tab-main){position:relative;margin:0 12px;border-radius:14px;transition:background .2s,color .2s}
+  .tabbar button:not(.tab-main){position:relative;margin:0 4px;border-radius:14px;transition:background .2s,color .2s}
   .tabbar button:not(.tab-main)[aria-current="page"]{background:color-mix(in srgb,var(--forest) 12%,transparent)}
   .tabbar button:not(.tab-main)[aria-current="page"] svg{stroke-width:2.4}
   .tabbar button:not(.tab-main)[aria-current="page"]::before{content:"";position:absolute;top:-8px;left:50%;width:26px;height:3px;margin-left:-13px;border-radius:0 0 3px 3px;background:var(--forest)}
-  .tabbar .tab-main{justify-self:center;width:68px;height:68px;border-radius:50%;background:var(--forest);color:var(--on-forest);margin:-32px 18px 0;justify-content:center;box-shadow:0 8px 20px rgba(46,107,96,.35);padding:0;font-size:12px;font-weight:700;transition:transform .15s}
+  .tabbar .tab-main{justify-self:center;width:68px;height:68px;border-radius:50%;background:var(--forest);color:var(--on-forest);margin:-32px 10px 0;justify-content:center;box-shadow:0 8px 20px rgba(46,107,96,.35);padding:0;font-size:12px;font-weight:700;transition:transform .15s}
   .tabbar .tab-main:active{transform:scale(0.95)}
   .tabbar .tab-main svg{width:28px;height:28px}
   .tabbar .tab-main:not([aria-current]){background:var(--surface);color:var(--forest);border:2.5px solid var(--forest)}
@@ -465,6 +471,38 @@ body.phase-back .meter .num{color:var(--accent)}
 .grip{user-select:none;-webkit-user-select:none}
 body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:none!important}
 
+
+/* 식단 */
+.meals .mbody{display:flex;flex-direction:column;gap:12px}
+.meals.folded .mbody{display:none}
+.mdays{display:flex;gap:6px;flex-wrap:wrap}
+.mday{border:1.5px solid var(--line);background:var(--bg);color:var(--muted);font:inherit;font-size:13.5px;font-weight:700;border-radius:99px;padding:6px 14px;cursor:pointer;display:inline-flex;gap:6px;align-items:center}
+.mday small{font-size:11px;color:var(--accent)}
+.mday[aria-pressed="true"]{background:var(--forest);border-color:var(--forest);color:var(--on-forest)}
+.mday[aria-pressed="true"] small{color:var(--on-forest)}
+.mdate{font-size:13px;font-weight:700;color:var(--muted)}
+.mlist{gap:6px}
+.mlist li.meal{align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.mlist li.meal:hover{background:var(--bg)}
+.mslot{flex:none;font-size:12px;font-weight:800;color:var(--on-forest);background:var(--accent);border-radius:99px;padding:3px 9px;margin-top:2px}
+.mtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;word-break:keep-all}
+.mtxt b{font-size:15px;color:var(--ink)}
+.mtxt span{font-size:13px;color:var(--muted)}
+.mempty{font-size:13.5px;color:var(--muted);justify-content:center;border:1px dashed var(--line)!important;border-radius:12px}
+.madd{display:grid;grid-template-columns:auto 1fr;gap:8px}
+.madd #mealIng{grid-column:1/-1}
+.madd .primary{grid-column:1/-1;padding:10px}
+.madd .field{font-size:14px;padding:9px 12px}
+.mtag{background:color-mix(in srgb,var(--forest) 12%,var(--surface));color:var(--forest);border-color:color-mix(in srgb,var(--forest) 30%,transparent)}
+@media (min-width:900px){.madd{grid-template-columns:auto 1fr 1.4fr auto}.madd #mealIng,.madd .primary{grid-column:auto}}
+
+/* 예상 기온: 최저 · 최고 */
+.temp-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--muted);min-width:0}
+.temp2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tbox{position:relative;display:block;min-width:0}
+.tbox small{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11.5px;font-weight:800;color:var(--accent);pointer-events:none}
+.tbox .field{width:100%;min-width:0;padding-left:40px;padding-right:8px}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -500,13 +538,13 @@ li.imp.on .must{opacity:.4}
         <input class="field" id="tripPlace" type="text" placeholder="캠핑장 이름을 치면 찾아 줘요" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="placeList">
         <ul class="place-list" id="placeList" role="listbox" hidden></ul>
         <span class="place-links" id="placeLinks"></span></div>
-      <label>예상 최저기온<input class="field" id="tripTemp" type="text" placeholder="예: 3℃"></label>
+      <div class="temp-field"><span>예상 기온</span><div class="temp2"><label class="tbox"><small>최저</small><input class="field" id="tripTemp" type="text" placeholder="3℃" aria-label="예상 최저기온"></label><label class="tbox"><small>최고</small><input class="field" id="tripTempHi" type="text" placeholder="12℃" aria-label="예상 최고기온"></label></div></div>
     </div>
   </header>
 
-  <div class="acct tabbed v-home v-set" id="acct"><span class="dot" id="acctDot"></span><span id="acctText">불러오는 중…</span><span class="grow"></span><span id="acctBtns"></span></div>
+  <div class="acct tabbed v-home" id="acct"><span class="dot" id="acctDot"></span><span id="acctText">불러오는 중…</span><span class="grow"></span><span id="acctBtns"></span></div>
 
-  <section class="fam tabbed v-home v-set" id="fam" hidden aria-labelledby="famTitle">
+  <section class="fam tabbed v-home v-fam" id="fam" hidden aria-labelledby="famTitle">
     <h3 id="famTitle">가족 공간 만들기</h3>
     <p id="famText">가족 공간을 만들면 이 목록이 거기로 올라가고, 가족을 QR로 초대해 함께 체크할 수 있어요.</p>
     <div class="row" id="famCreateRow"><input class="field" id="famName" type="text" value="우리 가족 캠핑" aria-label="가족 공간 이름"><button class="primary" id="famCreate">만들기</button></div>
@@ -538,6 +576,7 @@ li.imp.on .must{opacity:.4}
     <form class="add" id="lpAdd"><input id="lpNew" type="text" placeholder="예: 비 올 때, 아이와 함께, 바닷가" aria-label="새 상황 이름"><button type="submit">상황 추가</button></form>
   </section>
 
+  <section class="zone meals tabbed v-meal" id="meals" aria-label="식단"></section>
   <main class="grid tabbed v-home" id="grid"></main>
   <div class="list-foot tabbed v-home"><span id="defaultBox"></span></div>
 
@@ -559,7 +598,7 @@ li.imp.on .must{opacity:.4}
     <ol class="records" id="records"></ol>
   </section>
 
-  <section class="pane tabbed v-set mobile-only" id="famTab" aria-labelledby="famTabTitle">
+  <section class="pane tabbed v-fam mobile-only" id="famTab" aria-labelledby="famTabTitle">
     <h2 id="famTabTitle">가족</h2>
     <div id="famTabBody"></div>
   </section>
@@ -607,8 +646,10 @@ li.imp.on .must{opacity:.4}
   </div>
   <nav class="tabbar" aria-label="메뉴">
     <button data-tab="log"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>기록</span></button>
+    <button data-tab="meal"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3v8M5 3v5a2 2 0 0 0 4 0V3M7 11v10M16 21V3c-2.2 1-3.5 3.6-3.5 7 0 2 1.2 3 3.5 3"/></svg><span>식단</span></button>
     <button data-tab="home" class="tab-main" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8.5a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19.5z"/></svg><span>체크</span></button>
-    <button data-tab="set"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg><span>설정·가족</span><span class="news-dot" hidden></span></button>
+    <button data-tab="fam"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20c.4-3.6 2.6-5.6 5.5-5.6s5.1 2 5.5 5.6"/><circle cx="17" cy="9.5" r="2.5"/><path d="M15.6 14.6c2.6-.4 4.6 1.4 4.9 4.6"/></svg><span>가족</span></button>
+    <button data-tab="set"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg><span>설정</span><span class="news-dot" hidden></span></button>
   </nav>
 
   <div class="qr-modal" id="qrModal" hidden>
@@ -712,7 +753,7 @@ function track(p){
     .catch(err => { pending--; setSync("저장하지 못했어요. " + (err && err.message || "잠시 뒤 다시 해 보세요."), "err"); });
 }
 /* ---------- 상태 ---------- */
-let state = {zones:defaultZones(), labels:DEFAULT_LABELS.map(l => Object.assign({}, l)), checked:{}, back:{}, trip:{}, memo:"", f:{hide:false}};
+let state = {zones:defaultZones(), labels:DEFAULT_LABELS.map(l => Object.assign({}, l)), checked:{}, back:{}, meals:[], trip:{}, memo:"", f:{hide:false}};
 let records = [];
 function applySettings(json){
   if (!json) return;
@@ -726,7 +767,7 @@ function applySettings(json){
 applySettings(local.getData().settings);
 
 function settingsObj(){   // 가족 공간에 올리는 목록·여행 정보 (체크는 한 칸씩 따로)
-  return JSON.parse(JSON.stringify({zones:state.zones, labels:state.labels, trip:state.trip, memo:state.memo, f:state.f}));
+  return JSON.parse(JSON.stringify({zones:state.zones, labels:state.labels, meals:state.meals || [], trip:state.trip, memo:state.memo, f:state.f}));
 }
 let saveTimer = null;
 function save(){
@@ -803,7 +844,7 @@ function itemRow(z, i){
   return `<li class="${CK()[i.id]?"on":""}${i.imp?" imp":""}" data-i="${i.id}">
     <span class="grip" aria-hidden="true" title="눌러서 끌면 순서가 바뀌어요"><svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg></span>
     <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${CK()[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span>${i.imp?'<span class="must">꼭!</span>':""}</label>
-    ${badges(i.g, "tag")}
+    ${badges(i.g, "tag")}${i.m ? '<span class="tag mtag">식단</span>' : ""}
     <button class="pen" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 고치기" title="고치기">${PENCIL}</button>
     <button class="pen trash" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 빼기" title="빼기">${TRASH}</button></li>`;
 }
@@ -847,6 +888,7 @@ function render(){
   const grid = document.getElementById("grid");
   grid.innerHTML = state.zones.map(zoneView).join("") + '<button class="zone-new" id="zoneNew">+ 구역 추가</button>';
   setupDrag();
+  if (window.__mealsReady) renderMeals();
   document.body.classList.toggle("hide-done", state.f.hide);
 
   const {tot, got} = countAll();
@@ -1127,13 +1169,16 @@ twoStep("defaultBox", "처음 목록으로 되돌리기", "내가 고친 구역�
   () => { const before = snapState(); state.zones = defaultZones(); state.labels = DEFAULT_LABELS.map(l => Object.assign({}, l)); save(); clearChecks(); render(); offerUndo("처음 목록으로 바꿨어요.", before); });
 
 /* 여행 정보 */
-const TRIP = {tripStart:"start", tripNights:"nights", tripPlace:"place", tripTemp:"temp"};
+const TRIP = {tripStart:"start", tripNights:"nights", tripPlace:"place", tripTemp:"temp", tripTempHi:"tempHi"};
+const degC = v => { v = String(v || "").trim(); return /^-?\d+(\.\d+)?$/.test(v) ? v + "℃" : v; };
+const tempText = r => { const lo = degC(r.temp), hi = degC(r.tempHi); return lo && hi ? `${lo} ~ ${hi}` : (lo || hi); };
 function fillTrip(){
   Object.entries(TRIP).forEach(([id,k]) => { document.getElementById(id).value = state.trip[k] || ""; });
   document.getElementById("memo").value = state.memo || "";
   renderTripStars(); renderPlaceLinks();
 }
 Object.entries(TRIP).forEach(([id,k]) => document.getElementById(id).addEventListener("input", e => { state.trip[k] = e.target.value; save(); }));
+["tripTemp","tripTempHi"].forEach(id => document.getElementById(id).addEventListener("blur", e => { const v = degC(e.target.value); if (v !== e.target.value){ e.target.value = v; state.trip[TRIP[id]] = v; save(); } }));
 document.getElementById("memo").addEventListener("input", e => { state.memo = e.target.value; save(); });
 
 /* ---------- 캠핑장 찾기 · 우리 별점 ---------- */
@@ -1327,7 +1372,7 @@ function renderRecords(){
   ol.innerHTML = records.map(r => editRec === r.id ? recordForm(r) : `<li><details>
     <summary><span class="rdate">${esc((r.date||"날짜 없음").replace(/-/g,"."))}</span>
       <span class="rplace">${esc(r.place || "캠핑장 미입력")}</span>
-      <span class="rmeta">${Number(r.rating)?`<span class="rstar">★${Number(r.rating)}</span> · `:""}${r.nights?esc(r.nights)+"박 · ":""}${r.temp?esc(r.temp)+" · ":""}챙김 ${r.got}/${r.total}</span></summary>
+      <span class="rmeta">${Number(r.rating)?`<span class="rstar">★${Number(r.rating)}</span> · `:""}${r.nights?esc(r.nights)+"박 · ":""}${tempText(r)?esc(tempText(r))+" · ":""}챙김 ${r.got}/${r.total}</span></summary>
     <div class="rbody">
       <div class="rate-row"><span>우리 별점</span>${starsHTML(Number(r.rating)||0, `data-rid="${esc(r.id)}"`, "sm")}</div>
       ${r.place ? `<p>${r.addr?esc(r.addr)+" · ":""}${placeLinksHTML(r.place, r.placeUrl)}</p>` : ""}
@@ -1348,6 +1393,7 @@ function recordForm(r){
       <label>몇 박<input class="field" name="nights" type="number" min="0" max="30" inputmode="numeric" value="${esc(r.nights||"")}"></label>
       <label class="wide">캠핑장<input class="field" name="place" type="text" value="${esc(r.place||"")}"></label>
       <label>최저기온<input class="field" name="temp" type="text" value="${esc(r.temp||"")}" placeholder="예: 3℃"></label>
+      <label>최고기온<input class="field" name="tempHi" type="text" value="${esc(r.tempHi||"")}" placeholder="예: 12℃"></label>
       <label class="wide">메모<textarea class="field" name="memo" rows="2">${esc(r.memo||"")}</textarea></label>
       <label class="wide">안 챙긴 항목 <span class="camper">(쉼표로 나눠 적기)</span><textarea class="field" name="missed" rows="2">${esc((r.missed||[]).join(", "))}</textarea></label>
     </div>
@@ -1364,7 +1410,7 @@ document.getElementById("records").addEventListener("submit", e => {
   const f = e.target, id = f.dataset.id, r = records.find(x => x.id === id); if (!r) return;
   const v = n => f.elements[n].value.trim();
   const missed = v("missed") ? v("missed").split(/\s*,\s*/).filter(Boolean) : [];
-  const fields = {date:v("date"), nights:v("nights"), place:v("place"), temp:v("temp"), memo:v("memo"), missed};
+  const fields = {date:v("date"), nights:v("nights"), place:v("place"), temp:v("temp"), tempHi:v("tempHi"), memo:v("memo"), missed};
   if (Array.isArray(r.missed) && r.total){ fields.got = Math.max(0, r.total - missed.length); }
   const oldPid = r.placeId;
   if (fields.place !== (r.place||"")){ fields.placeId = ""; fields.addr = ""; fields.placeUrl = ""; }   // 이름을 바꾸면 카카오 장소 연결은 풀림
@@ -1399,7 +1445,7 @@ document.getElementById("saveRec").addEventListener("click", () => {
   }
   const packed = [], missed = [];
   state.zones.forEach(z => { (shownItems(z) || []).forEach(i => (state.checked[i.id] ? packed : missed).push(i.t)); });
-  const rec = {date:state.trip.start, nights:state.trip.nights||"", place:state.trip.place||"", temp:state.trip.temp||"",
+  const rec = {date:state.trip.start, nights:state.trip.nights||"", place:state.trip.place||"", temp:state.trip.temp||"", tempHi:state.trip.tempHi||"",
     memo:state.memo||"", got:packed.length, total:packed.length+missed.length, packed, missed,
     rating:state.trip.rating||"", addr:(state.trip.pinfo&&state.trip.pinfo.addr)||"", placeUrl:(state.trip.pinfo&&state.trip.pinfo.url)||"", placeId:(state.trip.pinfo&&state.trip.pinfo.id)||""};
   btn.disabled = true; btn.textContent = "기록하는 중…";
@@ -1434,7 +1480,7 @@ function applyFamily(d){
   if (isTyping() || saveTimer){ incoming = d; return; }
   incoming = null;
   const next = Object.assign({}, state);
-  ["zones","labels","trip","memo","f"].forEach(k => { if (d[k] !== undefined) next[k] = d[k]; });
+  ["zones","labels","meals","trip","memo","f"].forEach(k => { if (d[k] !== undefined) next[k] = d[k]; });
   next.checked = d.checked || {}; next.back = d.back || {};
   state = next; normalize();
   lsSet(KEY, JSON.stringify(state));
@@ -1497,12 +1543,12 @@ document.getElementById("famCreate").addEventListener("click", () => {
 
 /* 파이어베이스 스크립트가 부르는 연결점 */
 window.CAMP = {
-  setAccount(info){ ACCOUNT = info; renderAccount(); if (document.body.dataset.tab === "set") renderFamTab(); window.resumeShare && window.resumeShare(); },
+  setAccount(info){ ACCOUNT = info; renderAccount(); if (document.body.dataset.tab === "fam") renderFamTab(); window.resumeShare && window.resumeShare(); },
   enterFamily(fam, remote){
     FAMILY = fam; REMOTE = remote; ACCOUNT = Object.assign({}, ACCOUNT, {phase:"in"}); renderAccount(); showConnState(); window.resumeShare && window.resumeShare();
-    if (document.body.dataset.tab === "set") renderFamTab();
+    if (document.body.dataset.tab === "fam") renderFamTab();
   },
-  updateFamilyInfo(fam){ FAMILY = Object.assign({}, FAMILY, fam); renderAccount(); if (document.body.dataset.tab === "set") renderFamTab(); },
+  updateFamilyInfo(fam){ FAMILY = Object.assign({}, FAMILY, fam); renderAccount(); if (document.body.dataset.tab === "fam") renderFamTab(); },
   leaveFamily(){ FAMILY = null; REMOTE = null; records = local.getData().records; renderRecords(); },
   applyFamily, applyRecords, showConnState
 };
@@ -1591,12 +1637,14 @@ installAny.hidden = STANDALONE;
 installAny.addEventListener("click", () => showInstall(true));
 
 /* ---------- 휴대폰 아래 탭 ---------- */
-const TABS = ["home","log","set"];
+const TABS = ["home","log","set","meal","fam"];
 function setTab(t){
   if (!TABS.includes(t)) t = "home";
   document.body.dataset.tab = t;
   document.querySelectorAll(".tabbar button").forEach(b => { if (b.dataset.tab === t) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
-  if (t === "set"){ renderLabelList(); renderFamTab(); }
+  if (t === "set") renderLabelList();
+  if (t === "fam") renderFamTab();
+  if (t === "meal") renderMeals();
   if (t === "log") renderWriteHead();
   window.scrollTo({top:0});
 }
@@ -1680,9 +1728,9 @@ document.getElementById("mgDel").addEventListener("click", async () => {
 });
 /* 캠핑 기록을 엑셀용 CSV로 */
 document.getElementById("mgCsv").addEventListener("click", () => {
-  const head = ["출발일","박","캠핑장","주소","최저기온","우리 별점","메모","챙긴 수","전체 수","안 챙긴 항목"];
+  const head = ["출발일","박","캠핑장","주소","최저기온","최고기온","우리 별점","메모","챙긴 수","전체 수","안 챙긴 항목"];
   const q = v => '"' + String(v == null ? "" : v).replace(/"/g, '""') + '"';
-  const rows = records.map(r => [r.date, r.nights, r.place, r.addr, r.temp, r.rating, r.memo, r.got, r.total, (r.missed || []).join(", ")].map(q).join(","));
+  const rows = records.map(r => [r.date, r.nights, r.place, r.addr, r.temp, r.tempHi, r.rating, r.memo, r.got, r.total, (r.missed || []).join(", ")].map(q).join(","));
   const csv = "\ufeff" + [head.map(q).join(",")].concat(rows).join("\r\n");
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8"}));
@@ -1699,6 +1747,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"1.7.0", d:"2026. 10. 28.", items:["식단: 날짜별 끼니에 메뉴와 재료를 적으면, 재료가 먹거리 구역에 저절로 들어가요.","예상 기온을 최저 · 최고로 나눠 적어요.","휴대폰 아래 메뉴를 기록 · 식단 · 체크 · 가족 · 설정 다섯 칸으로 나눴어요."]},
   {v:"1.6.0", d:"2026. 10. 28.", items:["철수 체크: 출발 때 챙긴 물건만 모아서, 다시 실을 때 한 번 더 체크해요.","되돌리기: 항목 빼기, 체크 모두 지우기, 목록 바꾸기를 한 뒤 몇 초 안에 [되돌리기]를 누르면 원래대로 돌아와요."]},
   {v:"1.5.0", d:"2026. 10. 27.", items:["준비물 세팅 공유: 우리 목록을 짧은 주소와 QR로 보내고, 받은 목록을 더하거나 통째로 바꿀 수 있어요.","업데이트 소식을 설정에서 볼 수 있어요.","자매 앱 트립첵!(여행 준비물)으로 바로 가는 버튼이 생겼어요."]},
   {v:"1.4", d:"2026. 10. 27.", items:["꼭 챙길 물건 강조: 연필 → [꼭 챙기기]를 켜면 굵은 글씨와 꼭! 표시가 붙어요.","구역 이름을 누르면 구역이 접히고 펴져요.","화면 디자인을 새로 다듬었어요(흰 카드, 더 큰 체크칸)."]},
@@ -1910,7 +1959,7 @@ document.getElementById("newsVer").textContent = "지금 " + NEWS[0].v;
 markNews();
 
 /* ---------- 되돌리기: 빼기·지우기·바꾸기 뒤 몇 초 동안 ---------- */
-const snapState = () => JSON.parse(JSON.stringify({zones:state.zones, labels:state.labels, checked:state.checked, back:state.back || {}}));
+const snapState = () => JSON.parse(JSON.stringify({zones:state.zones, labels:state.labels, meals:state.meals || [], checked:state.checked, back:state.back || {}}));
 let undoTimer = null;
 function offerUndo(text, before){
   let el = document.getElementById("undoBar");
@@ -1926,7 +1975,7 @@ function restoreState(b){
     Object.keys(now).forEach(id => { if (!was[id]) setCheck(id, false, back); });
   };
   const nowC = state.checked, nowB = state.back || {};
-  state.zones = b.zones; state.labels = b.labels; state.checked = b.checked; state.back = b.back;
+  state.zones = b.zones; state.labels = b.labels; state.meals = b.meals || []; state.checked = b.checked; state.back = b.back;
   syncMap(nowC, b.checked, false); syncMap(nowB, b.back, true);
   save(); render();
 }
@@ -1934,6 +1983,93 @@ document.getElementById("phase").addEventListener("click", e => {
   const b = e.target.closest("button[data-ph]"); if (!b || b.dataset.ph === PHASE) return;
   PHASE = b.dataset.ph; lsSet("camcheck-phase", PHASE); render();
 });
+
+/* ---------- 식단: 끼니별 메뉴 + 재료 → 먹거리 구역에 자동으로 ---------- */
+const SLOTS = ["아침", "점심", "저녁", "간식"];
+const DAYNAMES = ["일","월","화","수","목","금","토"];
+let mealDay = 1;
+function foodZone(){
+  let z = state.zones.find(x => x.id === "food") || state.zones.find(x => norm(x.name) === norm("먹거리"));
+  if (!z){ z = {id:"food", name:"먹거리", sub:"장보기 목록", g:[], items:[]}; state.zones.push(z); }
+  return z;
+}
+function mealDays(){ const n = parseInt(state.trip.nights, 10); return Math.max(1, Math.min(10, (isNaN(n) ? 1 : n) + 1)); }
+function dayLabel(d){
+  const st = state.trip.start ? new Date(state.trip.start + "T00:00:00") : null;
+  if (!st || isNaN(st)) return `${d}일차`;
+  const x = new Date(st); x.setDate(x.getDate() + d - 1);
+  return `${d}일차 · ${x.getMonth() + 1}/${x.getDate()}(${DAYNAMES[x.getDay()]})`;
+}
+function addMeal(day, slot, menu, ingText){
+  const ing = ingText.split(/[,，、\n]/).map(t => t.trim()).filter(Boolean);
+  const m = {id:uid(), day, slot, menu, ing};
+  (state.meals || (state.meals = [])).push(m);
+  const fz = foodZone(); let added = 0;
+  ing.forEach(t => {
+    if (state.zones.some(z => z.items.some(i => norm(i.t) === norm(t)))) return;   // 이미 목록에 있으면 그대로
+    fz.items.push({id:uid(), t, g:[], m:m.id}); added++;
+  });
+  save(); render();
+  return added;
+}
+function delMeal(id){
+  const before = snapState();
+  const m = state.meals.find(x => x.id === id); if (!m) return;
+  state.meals = state.meals.filter(x => x.id !== id);
+  state.zones.forEach(z => {
+    z.items = z.items.filter(i => {
+      if (i.m !== id) return true;
+      const other = state.meals.find(o => o.ing.some(t => norm(t) === norm(i.t)));
+      if (other){ i.m = other.id; return true; }          // 다른 끼니에도 쓰는 재료면 남김
+      if (state.checked[i.id]){ delete state.checked[i.id]; setCheck(i.id, false, false); }
+      return false;
+    });
+  });
+  save(); render();
+  offerUndo(`"${m.menu}"을(를) 식단에서 뺐어요.`, before);
+}
+function renderMeals(){
+  const el = document.getElementById("meals"); if (!el) return;
+  if (inBack() && !matchMedia("(max-width:560px)").matches){ el.hidden = true; return; }
+  el.hidden = false;
+  const days = mealDays(); if (mealDay > days) mealDay = 1;
+  const meals = state.meals || [];
+  const folded = fold.has("meals");
+  const cnt = meals.length;
+  const list = meals.filter(m => m.day === mealDay).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+  el.className = "zone meals tabbed v-meal" + (folded ? " folded" : "");
+  el.innerHTML = `<div class="zone-head"><div class="zh-text"><h2><button type="button" class="zfold mfold" aria-expanded="${!folded}">식단</button></h2><div class="sub">메뉴와 재료를 적으면 재료가 먹거리 구역에 들어가요</div></div>
+    <button type="button" class="cnt zfold mfold" aria-expanded="${!folded}">${cnt}끼<svg class="chev" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
+    <div class="mbody">
+    <div class="mdays" role="tablist">${Array.from({length:days}, (_, i) => i + 1).map(d => `<button type="button" class="mday" data-d="${d}" aria-pressed="${d === mealDay}">${d}일차<small>${meals.filter(m => m.day === d).length || ""}</small></button>`).join("")}</div>
+    <div class="mdate">${esc(dayLabel(mealDay))}</div>
+    <ul class="mlist">${list.length ? list.map(m => `<li class="meal"><span class="mslot">${esc(m.slot)}</span><div class="mtxt"><b>${esc(m.menu)}</b>${m.ing.length ? `<span>${m.ing.map(esc).join(" · ")}</span>` : ""}</div><button type="button" class="pen trash mdel" data-m="${m.id}" aria-label="${esc(m.menu)} 빼기" title="빼기">${TRASH}</button></li>`).join("")
+      : `<li class="mempty">아직 이 날 식단이 없어요.</li>`}</ul>
+    <form class="madd" id="mealAdd">
+      <select class="qzsel" id="mealSlot" aria-label="끼니">${SLOTS.map(t => `<option ${t === "저녁" ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <input class="field" id="mealMenu" placeholder="메뉴 (예: 삼겹살 구이)" aria-label="메뉴">
+      <input class="field" id="mealIng" placeholder="재료를 쉼표로 (예: 삼겹살, 쌈채소, 쌈장)" aria-label="재료">
+      <button type="submit" class="primary">넣기</button>
+    </form></div>`;
+}
+document.getElementById("meals").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.classList.contains("mfold")){ toggleFold("meals"); return; }
+  if (b.classList.contains("mday")){ mealDay = Number(b.dataset.d); renderMeals(); return; }
+  if (b.classList.contains("mdel")){ delMeal(b.dataset.m); return; }
+});
+document.getElementById("meals").addEventListener("submit", e => {
+  e.preventDefault();
+  const menu = document.getElementById("mealMenu").value.trim();
+  if (!menu){ document.getElementById("mealMenu").focus(); return; }
+  const slot = document.getElementById("mealSlot").value, ing = document.getElementById("mealIng").value;
+  const added = addMeal(mealDay, slot, menu, ing);
+  toast(added ? `재료 ${added}개를 먹거리에 넣었어요.` : "식단에 넣었어요. 재료는 이미 목록에 있어요.");
+  const mm = document.getElementById("mealMenu"); if (mm) mm.focus();
+});
+["tripNights", "tripStart"].forEach(id => document.getElementById(id).addEventListener("input", () => setTimeout(renderMeals, 0)));
+window.__mealsReady = true;
+renderMeals();
 </script>
 <script type="module" src="app-firebase.js"></script>
 </body>
