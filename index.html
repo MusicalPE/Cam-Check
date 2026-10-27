@@ -2097,22 +2097,24 @@ async function loadWeather(force){
   const st = new Date(t.start + "T00:00:00"), nights = Math.max(0, parseInt(t.nights, 10) || 0);
   const en = new Date(st); en.setDate(en.getDate() + nights);
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  const last = new Date(today); last.setDate(last.getDate() + 15);   // 예보는 오늘부터 16일치까지
-  if (st > last){ wxNote(`아직 예보가 없어요. 출발 2주 전쯤 열면 채워져요.`); return; }
-  const cut = en > last; if (cut) en.setTime(last.getTime());
-  if (Math.round((en - today) / 864e5) < 0){ wxNote(""); return; }
+  if (en < today){ wxNote(""); return; }   // 지난 캠핑
   wxNote("날씨 예보를 불러오는 중…");
   try{
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lon.toFixed(4)}&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&start_date=${ymd(st < today ? today : st)}&end_date=${ymd(en)}`;
+    // 날짜를 직접 지정하면 서버 시간대에 따라 범위 밖이라고 거절될 때가 있어, 16일치를 통째로 받고 여기서 고름
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lon.toFixed(4)}&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=16`;
     const r = await fetch(url); if (!r.ok) throw new Error(r.status);
     const d = await r.json(); if (seq !== wxSeq) return;
-    const lo = Math.min(...d.daily.temperature_2m_min), hi = Math.max(...d.daily.temperature_2m_max);
+    const from = ymd(st), to = ymd(en), D = d.daily || {};
+    const idx = (D.time || []).map((x, i) => x >= from && x <= to ? i : -1).filter(i => i >= 0);
+    if (!idx.length){ wxNote(`아직 예보가 없어요. 출발 2주 전쯤 열면 채워져요.`); return; }
+    const lastDay = D.time[idx[idx.length - 1]], cut = lastDay < to;
+    const lo = Math.min(...idx.map(i => D.temperature_2m_min[i])), hi = Math.max(...idx.map(i => D.temperature_2m_max[i]));
     if (!isFinite(lo) || !isFinite(hi)) throw new Error("no data");
     t.temp = Math.round(lo) + "℃"; t.tempHi = Math.round(hi) + "℃"; t.tempAuto = true;
     document.getElementById("tripTemp").value = t.temp; document.getElementById("tripTempHi").value = t.tempHi;
     save();
-    wxNote(`날씨 예보로 채웠어요${cut ? `(${en.getMonth() + 1}/${en.getDate()}까지, 마지막 날은 아직 예보 전)` : ""} · 산속은 2~3도 더 낮게 보세요 <button type="button" class="link" id="wxGo">다시</button>`);
-  }catch(e){ if (seq === wxSeq) wxNote(`날씨 예보를 불러오지 못했어요. <button type="button" class="link" id="wxGo">다시</button>`); }
+    wxNote(`날씨 예보로 채웠어요${cut ? `(${+lastDay.slice(5,7)}/${+lastDay.slice(8)}까지, 그 뒤는 아직 예보 전)` : ""} · 산속은 2~3도 더 낮게 보세요 <button type="button" class="link" id="wxGo">다시</button>`);
+  }catch(e){ if (seq === wxSeq) wxNote(`날씨 예보를 불러오지 못했어요(${esc(e && e.message || "")}). <button type="button" class="link" id="wxGo">다시</button>`); }
 }
 window.loadWeather = loadWeather;
 document.getElementById("wxNote").addEventListener("click", e => { if (e.target.id === "wxGo") loadWeather(true); });
