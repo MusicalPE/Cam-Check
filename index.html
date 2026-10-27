@@ -558,7 +558,7 @@ li.imp.on .must{opacity:.4}
   </div>
 
   <div class="phase tabbed v-home" id="phase" role="group" aria-label="체크 단계"><button data-ph="go" aria-pressed="true">출발 체크</button><button data-ph="back" aria-pressed="false">철수 체크</button></div>
-  <p class="phase-hint tabbed v-home" id="phaseHint" hidden>출발 때 챙긴 것만 보여요. 다시 실을 때마다 체크하세요.</p>
+  <p class="phase-hint tabbed v-home" id="phaseHint" hidden>출발 때 챙긴 것만 보여요(먹거리는 빼고). 다시 실을 때마다 체크하세요.</p>
   <div class="bar tabbed v-home" id="totalBar"><i></i></div>
 
   <div class="tools tabbed v-home">
@@ -804,6 +804,7 @@ const visible = g => !g || !g.length || g.some(labelOn);   // 붙은 상황 중 
 const editingNow = (type, id) => quick && quick.type === type && quick.id === id;
 function viewItems(z){
   const it = shownItems(z); if (!it || !inBack()) return it;
+  if (z.id === "food" || String(z.name).replace(/\s+/g, "") === "먹거리") return [];   // 먹거리는 먹고 오니까 철수 때는 뺌
   return Object.keys(state.checked).length ? it.filter(i => state.checked[i.id]) : it;
 }
 function shownItems(z){
