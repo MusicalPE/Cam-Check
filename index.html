@@ -543,6 +543,10 @@ body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:non
 .wx-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;scrollbar-width:thin}
 .wx-scroll.wide .wx-table{border-radius:12px}
 .wx-hint{margin:3px 0 0;font-size:11px;font-weight:700;color:var(--muted);text-align:right}
+.wx-table td.today{background:color-mix(in srgb,var(--forest) 14%,var(--surface))}
+.wx-table tr:first-child td.today{box-shadow:inset 2px 0 0 var(--forest),inset -2px 0 0 var(--forest),inset 0 2px 0 var(--forest)}
+.wx-table tr.wx-temp td.today{box-shadow:inset 2px 0 0 var(--forest),inset -2px 0 0 var(--forest),inset 0 -2px 0 var(--forest)}
+.wx-today{display:inline-block;font-style:normal;font-size:10.5px;font-weight:800;color:var(--on-forest);background:var(--forest);border-radius:99px;padding:1px 7px;margin-bottom:2px}
 .wx-w{margin:4px 0 0;font-size:11.5px;font-weight:800;color:var(--accent);word-break:keep-all;line-height:1.4}
 
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
@@ -2191,15 +2195,15 @@ function renderWx(){
   if (lastDate < today){ el.innerHTML = msg("지난 캠핑이에요"); return; }
   const dates = Array.from({length:Math.min(n + 1, 31)}, (_, i) => { const x = new Date(st); x.setDate(x.getDate() + i); return x; });
   const cells = dates.map(dt => {
-    const key = ymd(dt), d = w.find(x => x.date === key);
-    const head = `<b>${dt.getMonth() + 1}/${dt.getDate()}<i>(${DAYNAMES[dt.getDay()]})</i></b>`;
-    if (!d) return {warn:[], day:"", tip:"", top:`${head}<span class="wx-none">아직 예보 전</span>`, bot:`<span class="wx-none">- / -</span>`};
+    const key = ymd(dt), d = w.find(x => x.date === key), isToday = key === ymd(today);
+    const head = `${isToday ? '<em class="wx-today">오늘</em>' : ""}<b>${dt.getMonth() + 1}/${dt.getDate()}<i>(${DAYNAMES[dt.getDay()]})</i></b>`;
+    if (!d) return {today:isToday, warn:[], day:"", tip:"", top:`${head}<span class="wx-none">${dt < today ? "지난 날" : "아직 예보 전"}</span>`, bot:`<span class="wx-none">- / -</span>`};
     const windy = (d.wind != null && d.wind >= 8) || (d.gust != null && d.gust >= 14);
     const wet = (d.pop != null && d.pop >= 60) || (d.rain != null && d.rain >= 5);
     const cold = d.lo != null && d.lo <= 0;
     const warn = [wet ? "비" : "", windy ? "바람" : "", cold ? "영하" : ""].filter(Boolean);
     const tip = `${WXNAME(d.code)}` + (d.pop != null ? ` · 비 ${d.pop}%` : "") + (d.rain ? ` ${Math.round(d.rain * 10) / 10}mm` : "") + (d.gust ? ` · 돌풍 ${Math.round(d.gust)}m/s` : "");
-    return {warn, day:`${dt.getMonth() + 1}/${dt.getDate()}`, tip,
+    return {today:isToday, warn, day:`${dt.getMonth() + 1}/${dt.getDate()}`, tip,
       top:`${head}<span class="wx-sky ${wet ? "hot" : ""}">${WXICON(d.code)}${esc(WXNAME(d.code))}${d.pop != null && d.pop >= 30 ? ` ${d.pop}%` : ""}</span><span class="${windy ? "hot" : ""}">바람 ${d.wind != null ? Math.round(d.wind) : "-"}m/s</span>`,
       bot:`<span class="${cold ? "hot" : ""}">${d.lo != null ? Math.round(d.lo) : "-"}°</span> / ${d.hi != null ? Math.round(d.hi) : "-"}°`};
   });
@@ -2207,10 +2211,12 @@ function renderWx(){
   const notes = cells.filter(c => c.warn.length).map(c => `${c.day} ${c.warn.join("·")}`);
   const wide = cells.length > 4;   // 5일이 넘으면 옆으로 밀어서 보기
   el.innerHTML = `<div class="wx-scroll${wide ? " wide" : ""}"><table class="wx-table" aria-label="날씨 예보"${wide ? ` style="min-width:${cells.length * 86}px"` : ""}><tbody>
-    <tr>${cells.map(c => `<td class="${c.warn.length ? "warn" : ""}"${c.tip ? ` title="${esc(c.tip)}"` : ""}>${c.top}</td>`).join("")}</tr>
-    <tr class="wx-temp">${none ? `<td colspan="${cells.length}" class="wx-empty">아직 예보가 없어요 · 출발 2주 전부터 나와요</td>` : cells.map(c => `<td class="${c.warn.length ? "warn" : ""}">${c.bot}</td>`).join("")}</tr>
+    <tr>${cells.map(c => `<td class="${c.warn.length ? "warn" : ""}${c.today ? " today" : ""}"${c.tip ? ` title="${esc(c.tip)}"` : ""}>${c.top}</td>`).join("")}</tr>
+    <tr class="wx-temp">${none ? `<td colspan="${cells.length}" class="wx-empty">아직 예보가 없어요 · 출발 2주 전부터 나와요</td>` : cells.map(c => `<td class="${c.warn.length ? "warn" : ""}${c.today ? " today" : ""}">${c.bot}</td>`).join("")}</tr>
   </tbody></table></div>${wide ? `<p class="wx-hint">옆으로 밀면 ${cells.length}일 모두 보여요 ›</p>` : ""}${notes.length ? `<p class="wx-w">주의 ${esc(notes.join(" · "))}${cells.some(c => c.warn.includes("바람")) ? " — 타프·텐트 단단히" : ""}</p>` : ""}`;
-}
+}const _renderWx = renderWx;
+renderWx = function(){ _renderWx(); const td = document.querySelector("#wxDays .wx-scroll.wide td.today"); if (td){ const sc = td.closest(".wx-scroll"); sc.scrollLeft = Math.max(0, td.offsetLeft - 8); } };
+
 ["tripStart", "tripNights"].forEach(id => document.getElementById(id).addEventListener("input", () => setTimeout(renderWx, 0)));
 window.__wxReady = true;
 renderWx();
