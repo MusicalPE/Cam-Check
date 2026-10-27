@@ -403,6 +403,14 @@ a.chip{text-decoration:none;display:inline-block}
 .zone-head .zh-text{flex:1 1 auto}
 .zone-head .cnt{flex:none}
 
+
+/* 자매 앱으로 가기 */
+.sister{display:inline-flex;align-items:center;gap:7px;margin-top:10px;font-size:13px;font-weight:700;color:var(--forest);text-decoration:none;background:var(--surface);border:1.5px solid var(--line);border-radius:99px;padding:4px 12px 4px 5px;width:max-content}
+.sister img{width:22px;height:22px;border-radius:7px;flex:none}
+.sister span{font-size:16px;line-height:1;opacity:.7}
+.sister:hover{border-color:var(--forest)}
+@media (max-width:560px){.sister{order:-1;margin-top:6px}}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -423,6 +431,7 @@ li.imp.on .must{opacity:.4}
       <div class="brand-text">
         <div class="eyebrow">Cam-Check · 캠첵!</div>
         <h1>가족 캠핑 체크리스트</h1>
+        <a class="sister" href="https://musicalpe.github.io/Trip-Check/"><img src="https://musicalpe.github.io/Trip-Check/icon-192-v2.png" alt="" width="22" height="22">트립첵!으로 가기<span aria-hidden="true">›</span></a>
       </div>
     </div>
     <div class="meter">
@@ -503,6 +512,7 @@ li.imp.on .must{opacity:.4}
     <h2 id="setTabTitle">설정</h2>
     <div class="set-row"><div><b>처음 목록으로 되돌리기</b><p>고친 구역·항목을 모두 처음 목록으로 바꿔요.</p></div><span id="defaultBox2"></span></div>
     <div class="set-row"><div><b>계정·자료 관리</b><p>기록 내려받기, 가족 공간에서 나가기, 계정 지우기</p></div><button class="chip" id="manageSet">열기</button></div>
+    <div class="set-row"><div><b>자매 앱 트립첵!</b><p>여행 준비물도 같은 방식으로 챙겨요. 로그인은 따로 한 번 해요.</p></div><a class="chip" href="https://musicalpe.github.io/Trip-Check/">열기</a></div>
     <div class="set-row"><div><b>개인정보처리방침</b><p>어떤 정보를 어디에 두는지 알려 드려요.</p></div><a class="chip" href="privacy.html">보기</a></div>
     <div class="set-row"><div><b>앱으로 설치하기</b><p>홈 화면에 캠첵! 아이콘을 만들어요.</p></div><button class="chip" id="installSet">설치 방법</button></div>
   </section>
