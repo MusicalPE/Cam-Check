@@ -24,6 +24,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Nanum+Gothic:wght@400;700;800&family=IBM+Plex+Mono:wght@500&display=swap">
+<script>
+/* 카카오톡 안 브라우저는 구글 로그인이 막혀 있어서, 앱 주소를 열면 휴대폰 기본 브라우저로 넘김 */
+(function(){
+  if (!/KAKAOTALK/i.test(navigator.userAgent)) return;
+  try{ if (sessionStorage.getItem("kakao-out")) return; sessionStorage.setItem("kakao-out", "1"); }catch(e){}
+  window.__kakaoOut = true;
+  location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+})();
+</script>
 <style>
 /* Layout: 숲 속 사이트 안내판 느낌 — 상단 여행 정보 + 전체 진행 막대, 구역별 카드 격자, 맨 아래 날짜별 캠핑 기록 */
 /* 캠첵! 그림 톤: 민트 하늘, 크림 텐트, 주황 깃발, 숲 초록, 연필 갈색 */
@@ -1751,11 +1760,7 @@ async function checkShareIn(){
   const h = location.hash;
   if (!h.startsWith(SHARE_KEY) && !h.startsWith("#s=")) return;
   // 카카오톡 안 브라우저는 구글 로그인이 안 되므로 휴대폰 기본 브라우저로 넘김
-  if (/KAKAOTALK/i.test(navigator.userAgent)){
-    location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
-    setTimeout(() => toast("다른 브라우저에서 열고 있어요. 안 열리면 오른쪽 위 [⋮] → [다른 브라우저로 열기]를 눌러 주세요."), 800);
-    return;
-  }
+  if (/KAKAOTALK/i.test(navigator.userAgent)) return;   // 머리에서 기본 브라우저로 넘김
   history.replaceState(null, "", location.pathname + location.search);
   let str;
   if (h.startsWith("#s=")){
@@ -1825,6 +1830,7 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && !shareEl.h
 document.getElementById("shareSet").addEventListener("click", openShareOut);
 document.getElementById("shareFoot").addEventListener("click", openShareOut);
 window.resumeShare = resumeShare;
+if (/KAKAOTALK/i.test(navigator.userAgent)) setTimeout(() => toast("카카오톡 안에서는 로그인이 안 돼요. 다른 브라우저에서 열고 있어요. 안 열리면 오른쪽 위 [⋮] → [다른 브라우저로 열기]를 눌러 주세요."), 900);
 window.addEventListener("hashchange", checkShareIn);
 checkShareIn();
 
