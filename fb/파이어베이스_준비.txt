@@ -1,4 +1,4 @@
-캠핑 체크 가족판 — 파이어베이스 준비 (처음 한 번만)
+캠첵! (가족판) — 파이어베이스 준비 (처음 한 번만)
 
 가족판 주소: https://musicalpe.github.io/camping/fb/
 (지금 쓰는 시트판 https://musicalpe.github.io/camping/ 은 그대로 둡니다)
