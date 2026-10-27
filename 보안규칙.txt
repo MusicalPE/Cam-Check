@@ -1,6 +1,3 @@
-* 캠첵!과 트립첵!이 같은 파이어베이스 프로젝트를 써서, 보안 규칙도 하나예요.
-* 파이어베이스 콘솔 > Firestore Database > 규칙 탭에서 지금 내용을 모두 지우고, 아래 rules_version 줄부터 끝까지 통째로 붙여 넣은 뒤 [게시]를 눌러 주세요.
-
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -59,36 +56,6 @@ service cloud.firestore {
           && request.resource.data.stars is number
           && request.resource.data.stars >= 0.5 && request.resource.data.stars <= 5;
         allow delete: if isFamily();
-      }
-    }
-
-    // ===== 트립첵! (여행 체크리스트) — 캠첵!과 자료를 따로 둠 =====
-    match /tripUsers/{uid} {
-      allow read, write: if signedIn() && request.auth.uid == uid;
-    }
-
-    match /tripFamilies/{fid} {
-      function isTripMember() { return signedIn() && request.auth.uid in resource.data.members; }
-
-      allow read: if isTripMember();
-
-      allow create: if signedIn()
-        && request.resource.data.owner == request.auth.uid
-        && request.resource.data.members == [request.auth.uid];
-
-      allow update: if (isTripMember() && (request.resource.data.owner == resource.data.owner || resource.data.owner == request.auth.uid))
-        || (signedIn()
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberInfo', 'joinWith'])
-            && request.resource.data.joinWith == resource.data.invite
-            && request.resource.data.members.toSet() == resource.data.members.toSet().union([request.auth.uid].toSet()));
-
-      allow delete: if signedIn() && (request.auth.uid == resource.data.owner
-        || (isTripMember() && resource.data.members.size() == 1));
-
-      // 여행 기록: 가족만
-      match /records/{rid} {
-        allow read, write: if signedIn()
-          && request.auth.uid in get(/databases/$(database)/documents/tripFamilies/$(fid)).data.members;
       }
     }
   }
