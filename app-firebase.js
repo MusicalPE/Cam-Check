@@ -109,6 +109,29 @@ async function start(){
       }
     },
     logout(){ return A.signOut(auth); },
+    /* 가족 공간에서 나가기: 나만 남아 있으면 가족 공간을 통째로 지움 */
+    async leaveFamily(){
+      if (!me || !fid) return;
+      await leaveOrWipe(fid);
+      await F.setDoc(F.doc(db, "users", me.uid), { family: F.deleteField() }, { merge: true });
+      stop(); C().leaveFamily(); C().setAccount({ phase: "nofamily", user: me });
+    },
+    /* 계정과 자료 모두 지우기 */
+    async deleteAccount(){
+      if (!me) throw new Error("먼저 로그인해 주세요.");
+      if (fid) await leaveOrWipe(fid);
+      stop();
+      try{ await F.deleteDoc(F.doc(db, "users", me.uid)); }catch(e){}
+      const u = auth.currentUser;
+      try{ await A.deleteUser(u); }
+      catch(e){
+        if (e && e.code === "auth/requires-recent-login"){
+          const p = new A.GoogleAuthProvider(); p.setCustomParameters({ prompt: "select_account" });
+          await A.reauthenticateWithPopup(u, p);
+          await A.deleteUser(u);
+        } else throw friendly(e);
+      }
+    },
     async createFamily(name, data, localRecords){
       if (!me) throw new Error("먼저 로그인해 주세요.");
       const fref = F.doc(F.collection(db, "families"));
@@ -126,6 +149,26 @@ async function start(){
       enter(fref.id);
     }
   };
+
+  /* 내가 마지막 가족이면 기록·나눈 별점·가족 공간을 모두 지우고, 아니면 나만 빠짐 */
+  async function leaveOrWipe(id){
+    const fref = F.doc(db, "families", id);
+    const snap = await F.getDoc(fref).catch(e => { throw friendly(e); });
+    if (!snap.exists()) return;
+    const d = snap.data(), others = (d.members || []).filter(u => u !== me.uid);
+    if (others.length){
+      const upd = { members: F.arrayRemove(me.uid), [`memberInfo.${me.uid}`]: F.deleteField() };
+      if (d.owner === me.uid) upd.owner = others[0];      // 만든 사람이 나가면 남은 가족에게 넘김
+      await F.updateDoc(fref, upd).catch(e => { throw friendly(e); });
+      return;
+    }
+    const recs = await F.getDocs(F.collection(fref, "records"));
+    const pids = new Set();
+    for (const r of recs.docs){ const pid = r.data().placeId; if (pid) pids.add(pid); }
+    for (const pid of pids){ try{ await F.deleteDoc(F.doc(db, "campsites", pid, "ratings", id)); }catch(e){} }
+    for (const r of recs.docs){ await F.deleteDoc(r.ref); }
+    await F.deleteDoc(fref).catch(e => { throw friendly(e); });
+  }
 
   async function join(code){
     const [id, inv] = String(code).split(".");

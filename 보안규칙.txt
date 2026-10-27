@@ -20,15 +20,17 @@ service cloud.firestore {
         && request.resource.data.owner == request.auth.uid
         && request.resource.data.members == [request.auth.uid];
 
-      // 가족은 고칠 수 있음(만든 사람은 못 바꿈)
+      // 가족은 고칠 수 있음(만든 사람 바꾸기는 만든 사람만 — 나갈 때 남은 가족에게 넘김)
       // 가족이 아닌 사람은 초대 코드를 알 때 자기 자신만 가족으로 넣을 수 있음
-      allow update: if (isMember() && request.resource.data.owner == resource.data.owner)
+      allow update: if (isMember() && (request.resource.data.owner == resource.data.owner || resource.data.owner == request.auth.uid))
         || (signedIn()
             && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberInfo', 'joinWith'])
             && request.resource.data.joinWith == resource.data.invite
             && request.resource.data.members.toSet() == resource.data.members.toSet().union([request.auth.uid].toSet()));
 
-      allow delete: if signedIn() && request.auth.uid == resource.data.owner;
+      // 지우기: 만든 사람, 또는 혼자 남은 가족
+      allow delete: if signedIn() && (request.auth.uid == resource.data.owner
+        || (isMember() && resource.data.members.size() == 1));
 
       // 캠핑 기록: 가족만
       match /records/{rid} {
