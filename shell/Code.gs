@@ -12,7 +12,7 @@ const SHEET_RECORD = '캠핑기록';
 const SHEET_SETTING = '설정';
 const HEADER = ['출발일', '박', '캠핑장', '최저기온', '메모', '챙긴 수', '전체 수', '챙긴 항목', '안 챙긴 항목', '저장 시각', '기록ID', '우리 별점', '주소', '장소 링크', '장소ID'];
 
-const APP_URL = 'https://musicalpe.github.io/CampCheck/';
+const APP_URL = 'https://musicalpe.github.io/Cam-Check/';
 
 /** 웹 앱 주소(/exec)를 열면 GitHub 화면으로 넘어가면서 이 시트와 자동으로 연결 */
 function doGet() {
