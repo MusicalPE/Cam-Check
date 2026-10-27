@@ -513,6 +513,30 @@ body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:non
 .place-links a{white-space:nowrap}
 .wx-note{word-break:keep-all}
 
+
+/* 위쪽 정보: 왼쪽 두 줄(출발일·몇 박 / 캠핑장), 오른쪽 예상 기온·날씨 */
+.trip{grid-template-columns:1.3fr .7fr 1.7fr;grid-template-areas:"start nights wx" "place place wx";align-items:start}
+.t-start{grid-area:start}.t-nights{grid-area:nights}.t-place{grid-area:place}.t-wx{grid-area:wx}
+@media (max-width:560px){.trip{grid-template-columns:1fr 1fr;grid-template-areas:"start nights" "place place" "wx wx"}}
+/* 날씨 표: 위 줄은 날짜·하늘·바람, 아래 줄은 최저/최고 */
+.wx-days{min-width:0}
+.wx-table{width:100%;border-collapse:separate;border-spacing:0;table-layout:fixed;background:var(--bg);border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.wx-table td{padding:7px 4px;text-align:center;vertical-align:middle;border-left:1px solid var(--line);line-height:1.3}
+.wx-table td:first-child{border-left:none}
+.wx-table td b{display:block;font-size:13px;color:var(--ink);white-space:nowrap}
+.wx-table td b i{font-style:normal;font-weight:700;color:var(--muted)}
+.wx-table td span{display:block;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap}
+.wx-sky{display:flex!important;align-items:center;justify-content:center;gap:2px;color:var(--forest)!important;margin:2px 0}
+.wx-sky svg{width:17px;height:17px;flex:none}
+.wx-table .hot{color:var(--accent)!important}
+.wx-temp td{border-top:1px dashed var(--line);font-family:var(--f-mono);font-size:14px;font-weight:700;color:var(--ink);padding:5px 4px;white-space:nowrap}
+.wx-temp td span{display:inline;font-size:14px;color:inherit}
+.wx-table td.warn{background:color-mix(in srgb,var(--accent) 8%,transparent)}
+.wx-none{color:var(--done)!important;font-weight:700}
+.wx-empty{color:var(--muted);font-size:12.5px;font-weight:700;padding:14px 8px!important;line-height:1.5;font-family:var(--f-body)!important}
+.wx-temp td.wx-empty{font-size:12.5px;color:var(--muted);font-weight:700}
+.wx-w{margin:4px 0 0;font-size:11.5px;font-weight:800;color:var(--accent);word-break:keep-all;line-height:1.4}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -542,13 +566,13 @@ li.imp.on .must{opacity:.4}
       <div class="cap" id="totalCap">챙긴 짐</div>
     </div>
     <div class="trip">
-      <label>출발일<input class="field" id="tripStart" type="date"></label>
-      <label>몇 박<input class="field" id="tripNights" type="number" min="0" max="30" inputmode="numeric" placeholder="1"></label>
-      <div class="place-field"><label for="tripPlace">캠핑장</label>
+      <label class="t-start">출발일<input class="field" id="tripStart" type="date"></label>
+      <label class="t-nights">몇 박<input class="field" id="tripNights" type="number" min="0" max="30" inputmode="numeric" placeholder="1"></label>
+      <div class="place-field t-place"><label for="tripPlace">캠핑장</label>
         <input class="field" id="tripPlace" type="text" placeholder="캠핑장 이름을 치면 찾아 줘요" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="placeList">
         <ul class="place-list" id="placeList" role="listbox" hidden></ul>
         <span class="place-links" id="placeLinks"></span></div>
-      <div class="temp-field"><span>예상 기온</span><div class="temp2"><label class="tbox"><small>최저</small><input class="field" id="tripTemp" type="text" placeholder="3℃" aria-label="예상 최저기온"></label><label class="tbox"><small>최고</small><input class="field" id="tripTempHi" type="text" placeholder="12℃" aria-label="예상 최고기온"></label></div><span class="wx-note" id="wxNote"></span></div>
+      <div class="temp-field t-wx"><span>날씨 예보</span><div class="temp2" hidden><label class="tbox"><small>최저</small><input class="field" id="tripTemp" type="text" placeholder="3℃" aria-label="예상 최저기온"></label><label class="tbox"><small>최고</small><input class="field" id="tripTempHi" type="text" placeholder="12℃" aria-label="예상 최고기온"></label></div><div class="wx-days" id="wxDays" hidden></div><span class="wx-note" id="wxNote"></span></div>
     </div>
   </header>
 
@@ -1334,10 +1358,10 @@ function pickPlace(i){
   const p = placeItems[i]; if (!p) return;
   state.trip.place = p.name;
   state.trip.pinfo = p.id || p.addr || p.url ? Object.assign({id:p.id||"", addr:p.addr||"", url:p.url||""}, p.lat ? {lat:p.lat, lon:p.lon} : {}) : null;
-  placeInput.value = p.name; save(); closePlaces(); renderPlaceLinks(); if (window.loadWeather) loadWeather();
+  placeInput.value = p.name; save(); closePlaces(); renderPlaceLinks(); if (window.loadWeather) loadWeather(true);
 }
 placeInput.addEventListener("input", () => {
-  state.trip.pinfo = null; renderPlaceLinks();
+  state.trip.pinfo = null; renderPlaceLinks(); if (window.__wxReady) renderWx();
   clearTimeout(placeTimer); placeTimer = setTimeout(searchPlaces, 280);
 });
 placeInput.addEventListener("focus", () => { if (placeInput.value.trim() && !state.trip.pinfo) searchPlaces(); });
@@ -1758,6 +1782,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"1.9.0", d:"2026. 10. 28.", items:["날씨 예보 표: 머무는 날마다 하늘 상태 · 비 확률 · 바람 세기 · 최저/최고 기온을 보여 주고, 비 · 강풍 · 영하인 날은 주황으로 알려 줘요.","위쪽 칸 배치를 바꿨어요(왼쪽 출발일 · 몇 박 · 캠핑장, 오른쪽 날씨)."]},
   {v:"1.8.0", d:"2026. 10. 28.", items:["날씨 예보: 카카오 검색으로 캠핑장을 고르면 머무는 날들의 최저 · 최고 기온을 예보로 채워 줘요(출발 2주 전부터).","철수 체크에서는 먹거리 구역을 빼고 보여요."]},
   {v:"1.7.0", d:"2026. 10. 28.", items:["식단: 날짜별 끼니에 메뉴와 재료를 적으면, 재료가 먹거리 구역에 저절로 들어가요.","예상 기온을 최저 · 최고로 나눠 적어요.","휴대폰 아래 메뉴를 기록 · 식단 · 체크 · 가족 · 설정 다섯 칸으로 나눴어요."]},
   {v:"1.6.0", d:"2026. 10. 28.", items:["철수 체크: 출발 때 챙긴 물건만 모아서, 다시 실을 때 한 번 더 체크해요.","되돌리기: 항목 빼기, 체크 모두 지우기, 목록 바꾸기를 한 뒤 몇 초 안에 [되돌리기]를 누르면 원래대로 돌아와요."]},
@@ -2089,38 +2114,92 @@ renderMeals();
 let wxTimer = null, wxSeq = 0;
 const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 function wxNote(html){ const el = document.getElementById("wxNote"); if (el) el.innerHTML = html || ""; }
-function canAuto(){ return state.trip.tempAuto || (!state.trip.temp && !state.trip.tempHi); }
+function canAuto(){ return true; }   // 기온은 늘 예보로 (지난 기록은 기록 고치기에서 손으로)
 async function loadWeather(force){
   const t = state.trip, p = t.pinfo, seq = ++wxSeq;
-  if (!p || !p.lat || !t.start){ wxNote(p && !p.lat && t.place ? "카카오 검색으로 캠핑장을 고르면 날씨 예보로 기온을 채워 줘요." : ""); return; }
-  if (!force && !canAuto()){ wxNote(`<button type="button" class="link" id="wxGo">예보로 채우기</button>`); return; }
+  if (!force && !canAuto()){ renderWx(); wxNote(`<button type="button" class="link" id="wxGo">예보로 채우기</button>`); return; }
+  if (!p || !p.lat || !t.start){ renderWx(); wxNote(""); return; }
   const st = new Date(t.start + "T00:00:00"), nights = Math.max(0, parseInt(t.nights, 10) || 0);
   const en = new Date(st); en.setDate(en.getDate() + nights);
   const today = new Date(); today.setHours(0, 0, 0, 0);
-  if (en < today){ wxNote(""); return; }   // 지난 캠핑
+  if (en < today){ renderWx(); wxNote(""); return; }   // 지난 캠핑
   wxNote("날씨 예보를 불러오는 중…");
   try{
     // 날짜를 직접 지정하면 서버 시간대에 따라 범위 밖이라고 거절될 때가 있어, 16일치를 통째로 받고 여기서 고름
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lon.toFixed(4)}&daily=temperature_2m_max,temperature_2m_min&timezone=Asia%2FSeoul&forecast_days=16`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lon.toFixed(4)}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&wind_speed_unit=ms&timezone=Asia%2FSeoul&forecast_days=16`;
     const r = await fetch(url); if (!r.ok) throw new Error(r.status);
     const d = await r.json(); if (seq !== wxSeq) return;
     const from = ymd(st), to = ymd(en), D = d.daily || {};
     const idx = (D.time || []).map((x, i) => x >= from && x <= to ? i : -1).filter(i => i >= 0);
-    if (!idx.length){ wxNote(`아직 예보가 없어요. 출발 2주 전쯤 열면 채워져요.`); return; }
+    if (!idx.length){ t.wx = []; t.temp = ""; t.tempHi = ""; t.tempAuto = true; fillTemps(); save(); renderWx(); wxNote(""); return; }
     const lastDay = D.time[idx[idx.length - 1]], cut = lastDay < to;
     const lo = Math.min(...idx.map(i => D.temperature_2m_min[i])), hi = Math.max(...idx.map(i => D.temperature_2m_max[i]));
     if (!isFinite(lo) || !isFinite(hi)) throw new Error("no data");
     t.temp = Math.round(lo) + "℃"; t.tempHi = Math.round(hi) + "℃"; t.tempAuto = true;
-    document.getElementById("tripTemp").value = t.temp; document.getElementById("tripTempHi").value = t.tempHi;
+    const nz = (a, i) => a && a[i] != null ? a[i] : null;
+    t.wx = idx.map(i => ({date:D.time[i], code:nz(D.weather_code, i), lo:nz(D.temperature_2m_min, i), hi:nz(D.temperature_2m_max, i),
+      pop:nz(D.precipitation_probability_max, i), rain:nz(D.precipitation_sum, i), wind:nz(D.wind_speed_10m_max, i), gust:nz(D.wind_gusts_10m_max, i)}));
+    t.wxAt = Date.now(); renderWx();
+    fillTemps();
     save();
-    wxNote(`날씨 예보로 채웠어요${cut ? `(${+lastDay.slice(5,7)}/${+lastDay.slice(8)}까지, 그 뒤는 아직 예보 전)` : ""} · 산속은 2~3도 더 낮게 보세요 <button type="button" class="link" id="wxGo">다시</button>`);
+    wxNote(`예보${cut ? `(${+lastDay.slice(5,7)}/${+lastDay.slice(8)}까지)` : ""} · 산속은 2~3도 낮게 <button type="button" class="link" id="wxGo">다시</button>`);
   }catch(e){ if (seq === wxSeq) wxNote(`날씨 예보를 불러오지 못했어요(${esc(e && e.message || "")}). <button type="button" class="link" id="wxGo">다시</button>`); }
 }
 window.loadWeather = loadWeather;
-document.getElementById("wxNote").addEventListener("click", e => { if (e.target.id === "wxGo") loadWeather(true); });
-["tripTemp", "tripTempHi"].forEach(id => document.getElementById(id).addEventListener("input", () => { if (state.trip.tempAuto){ state.trip.tempAuto = false; save(); wxNote(`직접 적은 값으로 둘게요. <button type="button" class="link" id="wxGo">예보로 채우기</button>`); } }));
+document.getElementById("wxNote").addEventListener("click", e => {
+  if (e.target.id === "wxGo") loadWeather(true);
+});
+["tripTemp", "tripTempHi"].forEach(id => document.getElementById(id).addEventListener("input", () => { if (state.trip.tempAuto){ state.trip.tempAuto = false; save(); renderWx(); wxNote(`직접 적은 값으로 둘게요. <button type="button" class="link" id="wxGo">예보로 채우기</button>`); } }));
 ["tripStart", "tripNights"].forEach(id => document.getElementById(id).addEventListener("input", () => { clearTimeout(wxTimer); wxTimer = setTimeout(() => loadWeather(), 600); }));
 setTimeout(() => loadWeather(), 800);
+
+/* 날씨 띠: 날마다 하늘 · 기온 · 비 · 바람, 위험하면 주황으로 */
+const WXNAME = c => c == null ? "" : c === 0 ? "맑음" : c <= 2 ? "구름 조금" : c === 3 ? "흐림" : c <= 48 ? "안개" : c <= 57 ? "이슬비" : c <= 67 ? "비" : c <= 77 ? "눈" : c <= 82 ? "소나기" : c <= 86 ? "눈 소나기" : "뇌우";
+const WXICON = c => {
+  const sun = '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4"/>';
+  const cloud = '<path d="M7 18h10a4 4 0 0 0 0-8 5 5 0 0 0-9.6 1.5A3.3 3.3 0 0 0 7 18z"/>';
+  const rain = cloud.replace("18h", "15h").replace("0 0 7 18z", "0 0 7 15z") + '<path d="M9 18l-1 3M13 18l-1 3M17 18l-1 3"/>';
+  const snow = cloud.replace("18h", "15h").replace("0 0 7 18z", "0 0 7 15z") + '<path d="M9 19h.01M13 20h.01M17 19h.01"/>';
+  const body = c == null ? cloud : c === 0 ? sun : c <= 3 || c <= 48 ? cloud : (c >= 71 && c <= 77) || c === 85 || c === 86 ? snow : rain;
+  return `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+};
+function fillTemps(){ document.getElementById("tripTemp").value = state.trip.temp || ""; document.getElementById("tripTempHi").value = state.trip.tempHi || ""; }
+function renderWx(){
+  const el = document.getElementById("wxDays"), inputs = document.querySelector(".temp2"); if (!el) return;
+  const t = state.trip, w = t.wx || [];
+  const auto = canAuto();
+  el.hidden = false; inputs.hidden = true;
+  const msg = text => `<table class="wx-table" aria-label="날씨 예보"><tbody><tr><td class="wx-empty">${text}</td></tr></tbody></table>`;
+  if (!t.start){ el.innerHTML = msg("출발일과 캠핑장을 넣으면<br>날씨 예보가 나와요"); return; }
+  if (!t.pinfo || !t.pinfo.lat){ el.innerHTML = msg("카카오 검색으로 캠핑장을 고르면<br>날씨 예보가 나와요"); return; }
+  const n = Math.max(0, parseInt(t.nights, 10) || 0), st = new Date(t.start + "T00:00:00");
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const lastDate = new Date(st); lastDate.setDate(lastDate.getDate() + n);
+  if (lastDate < today){ el.innerHTML = msg("지난 캠핑이에요"); return; }
+  const dates = Array.from({length:Math.min(n + 1, 5)}, (_, i) => { const x = new Date(st); x.setDate(x.getDate() + i); return x; });
+  const cells = dates.map(dt => {
+    const key = ymd(dt), d = w.find(x => x.date === key);
+    const head = `<b>${dt.getMonth() + 1}/${dt.getDate()}<i>(${DAYNAMES[dt.getDay()]})</i></b>`;
+    if (!d) return {warn:[], day:"", tip:"", top:`${head}<span class="wx-none">아직 예보 전</span>`, bot:`<span class="wx-none">- / -</span>`};
+    const windy = (d.wind != null && d.wind >= 8) || (d.gust != null && d.gust >= 14);
+    const wet = (d.pop != null && d.pop >= 60) || (d.rain != null && d.rain >= 5);
+    const cold = d.lo != null && d.lo <= 0;
+    const warn = [wet ? "비" : "", windy ? "바람" : "", cold ? "영하" : ""].filter(Boolean);
+    const tip = `${WXNAME(d.code)}` + (d.pop != null ? ` · 비 ${d.pop}%` : "") + (d.rain ? ` ${Math.round(d.rain * 10) / 10}mm` : "") + (d.gust ? ` · 돌풍 ${Math.round(d.gust)}m/s` : "");
+    return {warn, day:`${dt.getMonth() + 1}/${dt.getDate()}`, tip,
+      top:`${head}<span class="wx-sky ${wet ? "hot" : ""}">${WXICON(d.code)}${esc(WXNAME(d.code))}${d.pop != null && d.pop >= 30 ? ` ${d.pop}%` : ""}</span><span class="${windy ? "hot" : ""}">바람 ${d.wind != null ? Math.round(d.wind) : "-"}m/s</span>`,
+      bot:`<span class="${cold ? "hot" : ""}">${d.lo != null ? Math.round(d.lo) : "-"}°</span> / ${d.hi != null ? Math.round(d.hi) : "-"}°`};
+  });
+  const none = cells.every(c => !c.tip);
+  const notes = cells.filter(c => c.warn.length).map(c => `${c.day} ${c.warn.join("·")}`);
+  el.innerHTML = `<table class="wx-table" aria-label="날씨 예보"><tbody>
+    <tr>${cells.map(c => `<td class="${c.warn.length ? "warn" : ""}"${c.tip ? ` title="${esc(c.tip)}"` : ""}>${c.top}</td>`).join("")}</tr>
+    <tr class="wx-temp">${none ? `<td colspan="${cells.length}" class="wx-empty">아직 예보가 없어요 · 출발 2주 전부터 나와요</td>` : cells.map(c => `<td class="${c.warn.length ? "warn" : ""}">${c.bot}</td>`).join("")}</tr>
+  </tbody></table>${notes.length ? `<p class="wx-w">주의 ${esc(notes.join(" · "))}${cells.some(c => c.warn.includes("바람")) ? " — 타프·텐트 단단히" : ""}</p>` : ""}`;
+}
+["tripStart", "tripNights"].forEach(id => document.getElementById(id).addEventListener("input", () => setTimeout(renderWx, 0)));
+window.__wxReady = true;
+renderWx();
 </script>
 <script type="module" src="app-firebase.js"></script>
 </body>
