@@ -553,6 +553,9 @@ body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:non
 
 @media (max-width:560px){.foot-links{display:none}}
 
+.wx-src{font-size:10.5px;font-weight:600;color:var(--done)}
+.wx-src a{color:inherit}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -588,7 +591,7 @@ li.imp.on .must{opacity:.4}
         <input class="field" id="tripPlace" type="text" placeholder="캠핑장 이름을 치면 찾아 줘요" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="placeList">
         <ul class="place-list" id="placeList" role="listbox" hidden></ul>
         <span class="place-links" id="placeLinks"></span></div>
-      <div class="temp-field t-wx"><span>날씨 예보</span><div class="temp2" hidden><label class="tbox"><small>최저</small><input class="field" id="tripTemp" type="text" placeholder="3℃" aria-label="예상 최저기온"></label><label class="tbox"><small>최고</small><input class="field" id="tripTempHi" type="text" placeholder="12℃" aria-label="예상 최고기온"></label></div><div class="wx-days" id="wxDays" hidden></div><span class="wx-note" id="wxNote"></span></div>
+      <div class="temp-field t-wx"><span>날씨 예보</span><div class="temp2" hidden><label class="tbox"><small>최저</small><input class="field" id="tripTemp" type="text" placeholder="3℃" aria-label="예상 최저기온"></label><label class="tbox"><small>최고</small><input class="field" id="tripTempHi" type="text" placeholder="12℃" aria-label="예상 최고기온"></label></div><div class="wx-days" id="wxDays" hidden></div><span class="wx-note" id="wxNote"></span><span class="wx-src">날씨 자료: <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a></span></div>
     </div>
   </header>
 
@@ -665,7 +668,7 @@ li.imp.on .must{opacity:.4}
   </section>
 
   <div class="conn-foot"><button class="link" id="installAny" hidden>앱으로 설치하기</button></div>
-  <footer id="foot" class="tabbed v-set"><span class="foot-links"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button><br></span>Made by 음악적체육인</footer>
+  <footer id="foot" class="tabbed v-set"><span class="foot-links"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button><br></span>Made by 음악적체육인 · <a href="https://github.com/MusicalPE/Cam-Check/blob/main/LICENSE" target="_blank" rel="noopener">사용 조건</a></footer>
 
   <div class="qr-modal" id="manage" hidden>
     <div class="qr-card mg-card" role="dialog" aria-modal="true" aria-labelledby="mgTitle">
