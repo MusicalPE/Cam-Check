@@ -420,6 +420,7 @@ a.chip{text-decoration:none;display:inline-block}
 .share-list li span{color:var(--muted);font-size:13px;white-space:nowrap}
 .share-btns{display:flex;gap:10px;flex-wrap:wrap}
 .share-btns .primary{flex:1 1 auto}
+.share-login{background:var(--accent-soft);border-radius:10px;padding:10px 12px;color:var(--ink)!important}
 .share-note{font-size:12.5px!important}
 .share-qr{width:min(220px,70%);align-self:center}
 .share-short{font-family:var(--f-mono);font-size:13px;color:var(--forest);text-align:center;word-break:break-all}
@@ -1437,9 +1438,9 @@ document.getElementById("famCreate").addEventListener("click", () => {
 
 /* 파이어베이스 스크립트가 부르는 연결점 */
 window.CAMP = {
-  setAccount(info){ ACCOUNT = info; renderAccount(); if (document.body.dataset.tab === "set") renderFamTab(); },
+  setAccount(info){ ACCOUNT = info; renderAccount(); if (document.body.dataset.tab === "set") renderFamTab(); window.resumeShare && window.resumeShare(); },
   enterFamily(fam, remote){
-    FAMILY = fam; REMOTE = remote; ACCOUNT = Object.assign({}, ACCOUNT, {phase:"in"}); renderAccount(); showConnState();
+    FAMILY = fam; REMOTE = remote; ACCOUNT = Object.assign({}, ACCOUNT, {phase:"in"}); renderAccount(); showConnState(); window.resumeShare && window.resumeShare();
     if (document.body.dataset.tab === "set") renderFamTab();
   },
   updateFamilyInfo(fam){ FAMILY = Object.assign({}, FAMILY, fam); renderAccount(); if (document.body.dataset.tab === "set") renderFamTab(); },
@@ -1740,9 +1741,21 @@ function openShareOut(){
   });
   document.getElementById("shareMake").focus();
 }
+const PEND_KEY = APP_ID + "-pending-share";
+let pendingShare = null;   // 받은 세팅(로그인 끝날 때까지 기다림)
+const loggedIn = () => ACCOUNT.phase === "in" || ACCOUNT.phase === "nofamily";
+const waitAccount = (ms = 8000) => new Promise(res => {
+  const t0 = Date.now(); (function poll(){ if (ACCOUNT.phase !== "loading" || Date.now() - t0 > ms) return res(); setTimeout(poll, 200); })();
+});
 async function checkShareIn(){
   const h = location.hash;
   if (!h.startsWith(SHARE_KEY) && !h.startsWith("#s=")) return;
+  // 카카오톡 안 브라우저는 구글 로그인이 안 되므로 휴대폰 기본 브라우저로 넘김
+  if (/KAKAOTALK/i.test(navigator.userAgent)){
+    location.href = "kakaotalk://web/openExternal?url=" + encodeURIComponent(location.href);
+    setTimeout(() => toast("다른 브라우저에서 열고 있어요. 안 열리면 오른쪽 위 [⋮] → [다른 브라우저로 열기]를 눌러 주세요."), 800);
+    return;
+  }
   history.replaceState(null, "", location.pathname + location.search);
   let str;
   if (h.startsWith("#s=")){
@@ -1755,32 +1768,63 @@ async function checkShareIn(){
   let data;
   try{ data = await unpackShare(str); }catch(e){ toast("받은 링크를 읽지 못했어요. 링크가 잘렸는지 확인해 주세요."); return; }
   if (!data || !Array.isArray(data.z)) return;
+  pendingShare = data;
+  try{ localStorage.setItem(PEND_KEY, str); }catch(e){}   // 로그인 창을 다녀와도 잊지 않게
+  await waitAccount();
+  showReceived();
+}
+/* 로그인하고 가족 공간에 들어오면, 기다리던 받은 세팅을 다시 띄움 */
+function resumeShare(){
+  if (!pendingShare){
+    let str = null; try{ str = localStorage.getItem(PEND_KEY); }catch(e){}
+    if (!str) return;
+    unpackShare(str).then(d => { pendingShare = d; resumeShare(); }).catch(() => { try{ localStorage.removeItem(PEND_KEY); }catch(e){} });
+    return;
+  }
+  if (loggedIn() && shareEl.hidden) setTimeout(showReceived, 400);
+}
+function doneShare(){ pendingShare = null; try{ localStorage.removeItem(PEND_KEY); }catch(e){} }
+function showReceived(){
+  const data = pendingShare; if (!data) return;
   const n = data.z.reduce((a, z) => a + (z.i || []).length, 0);
   const other = data.app && data.app !== APP_ID;
+  const out = !loggedIn() && ACCOUNT.phase !== "noconfig";
   document.getElementById("shareTitle").textContent = "받은 준비물 세팅";
   document.getElementById("shareBody").innerHTML = `
     <p>구역 ${data.z.length}개, 항목 ${n}개가 들어 있어요.${other ? ` <b>${data.app === "cam" ? "캠첵!" : "트립첵!"}</b>에서 만든 세팅이에요.` : ""}</p>
     <ul class="share-list">${data.z.map(z => `<li><b>${esc(z.n)}</b> <span>${(z.i || []).length}개</span></li>`).join("")}</ul>
-    <div class="share-btns"><button class="primary" id="shareMerge">내 목록에 더하기</button><button class="chip" id="shareReplace">이걸로 바꾸기</button></div>
-    <p class="share-note">더하기: 나한테 없는 항목만 들어와요. 바꾸기: 지금 목록과 체크가 받은 세팅으로 바뀌어요.</p>
+    ${out ? `<p class="share-login"><b>먼저 로그인해 주세요.</b> 로그인하면 우리 가족 목록에 바로 더할 수 있어요. 로그인 뒤 이 창이 다시 떠요.</p>
+      <div class="share-btns"><button class="primary" id="shareLogin">구글로 로그인</button></div>`
+    : `<div class="share-btns"><button class="primary" id="shareMerge">내 목록에 더하기</button><button class="chip" id="shareReplace">이걸로 바꾸기</button></div>
+    <p class="share-note">더하기: 나한테 없는 항목만 들어와요. 바꾸기: 지금 목록과 체크가 받은 세팅으로 바뀌어요.</p>`}
     <p class="msg" id="shareMsg" aria-live="polite"></p>`;
   shareEl.hidden = false;
+  if (out){
+    document.getElementById("shareLogin").addEventListener("click", e => {
+      e.currentTarget.disabled = true;
+      (window.FBAPP ? window.FBAPP.login() : Promise.reject(new Error("잠시 뒤 다시 눌러 주세요.")))
+        .then(() => closeShare())
+        .catch(err => { e.currentTarget.disabled = false; document.getElementById("shareMsg").textContent = "로그인하지 못했어요. " + (err && err.message || ""); });
+    });
+    return;
+  }
   document.getElementById("shareMerge").addEventListener("click", () => {
-    const r = applyShared(data, "merge"); closeShare(); setTab("home");
+    const r = applyShared(data, "merge"); doneShare(); closeShare(); setTab("home");
     toast(r.addedItems ? `항목 ${r.addedItems}개를 더했어요.${r.addedZones ? ` (새 구역 ${r.addedZones}개)` : ""}` : "새로 더할 항목이 없었어요. 이미 다 있어요.");
   });
   let sure = false;
   document.getElementById("shareReplace").addEventListener("click", e => {
     if (!sure){ sure = true; e.target.textContent = "정말 바꿀까요? 한 번 더 누르기"; return; }
-    applyShared(data, "replace"); closeShare(); setTab("home"); toast("받은 세팅으로 바꿨어요.");
+    applyShared(data, "replace"); doneShare(); closeShare(); setTab("home"); toast("받은 세팅으로 바꿨어요.");
   });
 }
 function closeShare(){ shareEl.hidden = true; }
-document.getElementById("shareClose").addEventListener("click", closeShare);
+document.getElementById("shareClose").addEventListener("click", () => { if (pendingShare && loggedIn()) doneShare(); closeShare(); });
 shareEl.addEventListener("click", e => { if (e.target === shareEl) closeShare(); });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !shareEl.hidden) closeShare(); });
 document.getElementById("shareSet").addEventListener("click", openShareOut);
 document.getElementById("shareFoot").addEventListener("click", openShareOut);
+window.resumeShare = resumeShare;
 window.addEventListener("hashchange", checkShareIn);
 checkShareIn();
 
