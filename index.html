@@ -411,6 +411,29 @@ a.chip{text-decoration:none;display:inline-block}
 .sister:hover{border-color:var(--forest)}
 @media (max-width:560px){.sister{order:-1;margin-top:6px}}
 
+
+/* 준비물 세팅 공유 · 업데이트 소식 */
+.share-card p{margin:0;font-size:14px;color:var(--muted);line-height:1.55}
+.share-card p b{color:var(--ink)}
+.share-list{list-style:none;margin:0;padding:10px 12px;display:flex;flex-direction:column;gap:2px;max-height:240px;overflow-y:auto;background:var(--bg);border:1px solid var(--line);border-radius:12px}
+.share-list li{display:flex;justify-content:space-between;gap:10px;padding:5px 2px;border:none;font-size:14px}
+.share-list li span{color:var(--muted);font-size:13px;white-space:nowrap}
+.share-btns{display:flex;gap:10px;flex-wrap:wrap}
+.share-btns .primary{flex:1 1 auto}
+.share-note{font-size:12.5px!important}
+.share-url{margin-top:8px;font-size:12px;word-break:break-all}
+.news-body{display:flex;flex-direction:column;gap:14px;max-height:60vh;overflow-y:auto}
+.news-item h4{margin:0 0 6px;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center}
+.news-item h4 span{font-family:var(--f-mono);font-size:12.5px;color:var(--on-forest);background:var(--forest);border-radius:99px;padding:2px 9px}
+.news-item ul{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:5px}
+.news-item li{display:list-item;padding:0;border:none;font-size:14px;line-height:1.55;color:var(--ink)}
+.news-dot{display:inline-block;font-size:11px;font-weight:800;color:#fff;background:var(--accent);border-radius:99px;padding:1px 7px;margin-left:4px;vertical-align:2px}
+.mg-card > *{flex-shrink:0}
+.set-row p,.mg-row p,.share-card p,.news-item li{word-break:keep-all;overflow-wrap:break-word}
+#shareBody{display:flex;flex-direction:column;gap:12px;text-align:left}
+.share-list li:hover,.news-item li:hover{background:none;border-color:transparent}
+.tabbar .news-dot{position:absolute;top:2px;right:18%;margin:0;padding:0;width:9px;height:9px;font-size:0;border:2px solid var(--surface)}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -512,13 +535,15 @@ li.imp.on .must{opacity:.4}
     <h2 id="setTabTitle">설정</h2>
     <div class="set-row"><div><b>처음 목록으로 되돌리기</b><p>고친 구역·항목을 모두 처음 목록으로 바꿔요.</p></div><span id="defaultBox2"></span></div>
     <div class="set-row"><div><b>계정·자료 관리</b><p>기록 내려받기, 가족 공간에서 나가기, 계정 지우기</p></div><button class="chip" id="manageSet">열기</button></div>
-    <div class="set-row"><div><b>자매 앱 트립첵!</b><p>여행 준비물도 같은 방식으로 챙겨요. 로그인은 따로 한 번 해요.</p></div><a class="chip" href="https://musicalpe.github.io/Trip-Check/">열기</a></div>
+    <div class="set-row"><div><b>자매 앱 트립첵!</b><p>여행 준비물도 같은 방식으로 챙겨요.<br>로그인은 따로 한 번 해요.</p></div><a class="chip" href="https://musicalpe.github.io/Trip-Check/">열기</a></div>
+    <div class="set-row"><div><b>준비물 세팅 공유</b><p>우리 목록을 링크로 보내요.<br>받은 사람은 더하거나 통째로 바꿀 수 있어요.</p></div><button class="chip" id="shareSet">보내기</button></div>
+    <div class="set-row"><div><b>업데이트 소식 <span class="news-dot" hidden>새 소식</span></b><p id="newsVer"></p></div><button class="chip" id="newsSet">보기</button></div>
     <div class="set-row"><div><b>개인정보처리방침</b><p>어떤 정보를 어디에 두는지 알려 드려요.</p></div><a class="chip" href="privacy.html">보기</a></div>
     <div class="set-row"><div><b>앱으로 설치하기</b><p>홈 화면에 캠첵! 아이콘을 만들어요.</p></div><button class="chip" id="installSet">설치 방법</button></div>
   </section>
 
   <div class="conn-foot"><button class="link" id="installAny" hidden>앱으로 설치하기</button></div>
-  <footer id="foot"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button><br>Made by 음악적체육인</footer>
+  <footer id="foot"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button><br>Made by 음악적체육인</footer>
 
   <div class="qr-modal" id="manage" hidden>
     <div class="qr-card mg-card" role="dialog" aria-modal="true" aria-labelledby="mgTitle">
@@ -533,10 +558,24 @@ li.imp.on .must{opacity:.4}
     </div>
   </div>
 
+  <div class="qr-modal" id="shareModal" hidden>
+    <div class="qr-card mg-card share-card" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
+      <h3 id="shareTitle">준비물 세팅 공유</h3>
+      <div id="shareBody"></div>
+      <div class="row"><button class="chip" id="shareClose">닫기</button></div>
+    </div>
+  </div>
+  <div class="qr-modal" id="newsModal" hidden>
+    <div class="qr-card mg-card" role="dialog" aria-modal="true" aria-labelledby="newsTitle">
+      <h3 id="newsTitle">업데이트 소식</h3>
+      <div id="newsBody" class="news-body"></div>
+      <div class="row"><button class="chip" id="newsClose">닫기</button></div>
+    </div>
+  </div>
   <nav class="tabbar" aria-label="메뉴">
     <button data-tab="log"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>기록</span></button>
     <button data-tab="home" class="tab-main" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11l8-7 8 7v8.5a1.5 1.5 0 0 1-1.5 1.5H15v-6H9v6H5.5A1.5 1.5 0 0 1 4 19.5z"/></svg><span>체크</span></button>
-    <button data-tab="set"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg><span>설정·가족</span></button>
+    <button data-tab="set"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg><span>설정·가족</span><span class="news-dot" hidden></span></button>
   </nav>
 
   <div class="qr-modal" id="qrModal" hidden>
@@ -1595,6 +1634,147 @@ document.getElementById("mgCsv").addEventListener("click", () => {
 fillTrip(); render(); renderAccount();
 setTab("home");   // 늘 체크 화면부터
 records = local.getData().records; renderRecords();
+
+const APP_ID = "cam", APP_NAME = "캠첵!";
+const NEWS = [
+  {v:"1.5.0", d:"2026. 10. 27.", items:["준비물 세팅 공유: 우리 목록을 링크로 보내고, 받은 목록을 더하거나 통째로 바꿀 수 있어요.","업데이트 소식을 설정에서 볼 수 있어요.","자매 앱 트립첵!(여행 준비물)으로 바로 가는 버튼이 생겼어요."]},
+  {v:"1.4", d:"2026. 10. 27.", items:["꼭 챙길 물건 강조: 연필 → [꼭 챙기기]를 켜면 굵은 글씨와 꼭! 표시가 붙어요.","구역 이름을 누르면 구역이 접히고 펴져요.","흰 카드 디자인, 더 큰 체크칸, 긴 이름은 낱말 단위로 줄바꿈."]},
+  {v:"1.3", d:"2026. 10.", items:["개인정보처리방침, 계정·자료 관리(기록 내려받기, 가족에서 나가기, 계정 지우기).","휴대폰 아래 탭을 기록 · 체크 · 설정·가족 세 칸으로 정리.","별점을 반 개 단위로."]}
+];
+/* ---------- 준비물 세팅 공유 (링크) ----------
+   구역·항목·상황·꼭! 표시만 링크 안에 담음. 체크·가족·기록은 담지 않음. 서버에 올리지 않음 */
+const SHARE_KEY = "#share=";
+const b64u = {
+  enc: bytes => { let s = ""; bytes.forEach(b => s += String.fromCharCode(b)); return btoa(s).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,""); },
+  dec: str => { const s = atob(str.replace(/-/g,"+").replace(/_/g,"/")); return Uint8Array.from(s, c => c.charCodeAt(0)); }
+};
+async function pipeBytes(bytes, stream){
+  const out = new Response(new Blob([bytes]).stream().pipeThrough(stream));
+  return new Uint8Array(await out.arrayBuffer());
+}
+async function packShare(obj){
+  const raw = new TextEncoder().encode(JSON.stringify(obj));
+  if (window.CompressionStream){ try{ return "z" + b64u.enc(await pipeBytes(raw, new CompressionStream("deflate-raw"))); }catch(e){} }
+  return "j" + b64u.enc(raw);
+}
+async function unpackShare(str){
+  const kind = str[0], bytes = b64u.dec(str.slice(1));
+  const raw = kind === "z" ? await pipeBytes(bytes, new DecompressionStream("deflate-raw")) : bytes;
+  return JSON.parse(new TextDecoder().decode(raw));
+}
+function shareObj(){
+  return { v:1, app:APP_ID, l:state.labels.map(l => l.name),
+    z:state.zones.map(z => ({ n:z.name, s:z.sub || "", g:z.g.map(id => state.labels.findIndex(l => l.id === id)).filter(i => i >= 0),
+      i:z.items.map(i => { const r = [i.t]; const g = i.g.map(id => state.labels.findIndex(l => l.id === id)).filter(x => x >= 0);
+        if (g.length || i.imp) r.push(g); if (i.imp) r.push(1); return r; }) })) };
+}
+const norm = t => String(t || "").replace(/\s+/g, "").toLowerCase();
+function labelIdsFor(names, idxs){
+  return (idxs || []).map(ix => {
+    const name = names[ix]; if (!name) return null;
+    let l = state.labels.find(x => norm(x.name) === norm(name));
+    if (!l){ l = {id:uid(), name, on:true}; state.labels.push(l); }
+    return l.id;
+  }).filter(Boolean);
+}
+function applyShared(data, mode){
+  const names = data.l || [];
+  if (mode === "replace"){
+    state.labels = []; state.zones = [];
+  }
+  let addedItems = 0, addedZones = 0;
+  (data.z || []).forEach(dz => {
+    let z = mode === "merge" ? state.zones.find(x => norm(x.name) === norm(dz.n)) : null;
+    if (!z){ z = {id:uid(), name:dz.n || "구역", sub:dz.s || "", g:labelIdsFor(names, dz.g), items:[]}; state.zones.push(z); addedZones++; }
+    (dz.i || []).forEach(r => {
+      if (mode === "merge" && state.zones.some(x => x.items.some(i => norm(i.t) === norm(r[0])))) return;
+      const it = {id:uid(), t:r[0], g:labelIdsFor(names, r[1])}; if (r[2]) it.imp = true;
+      z.items.push(it); addedItems++;
+    });
+  });
+  if (mode === "replace"){ save(); clearChecks(); } else save();
+  render();
+  return {addedItems, addedZones};
+}
+const shareEl = document.getElementById("shareModal");
+function openShareOut(){
+  const box = document.getElementById("shareBody");
+  const n = state.zones.reduce((a, z) => a + z.items.length, 0);
+  box.innerHTML = `<p>지금 우리 목록(구역 ${state.zones.length}개, 항목 ${n}개)을 링크로 만들어요. 체크 상태, 가족 이름, 기록은 들어가지 않아요.</p>
+    <div class="row"><button class="primary" id="shareMake">링크 만들기</button></div><p class="msg" id="shareMsg" aria-live="polite"></p>`;
+  document.getElementById("shareTitle").textContent = "준비물 세팅 공유";
+  shareEl.hidden = false;
+  document.getElementById("shareMake").addEventListener("click", async () => {
+    const msg = document.getElementById("shareMsg");
+    const url = location.origin + location.pathname + SHARE_KEY + await packShare(shareObj());
+    const text = `${APP_NAME} 준비물 세팅을 보내요. 열어서 [내 목록에 더하기]나 [이걸로 바꾸기]를 누르면 돼요.`;
+    if (navigator.share){
+      try{ await navigator.share({title:APP_NAME + " 준비물 세팅", text, url}); msg.textContent = "보냈어요."; return; }
+      catch(e){ if (e && e.name === "AbortError") return; }
+    }
+    try{ await navigator.clipboard.writeText(url); msg.textContent = "링크를 복사했어요. 카톡이나 문자에 붙여 넣어 보내세요."; }
+    catch(e){ msg.innerHTML = `아래 링크를 길게 눌러 복사해 주세요.<textarea class="field share-url" readonly rows="3">${esc(url)}</textarea>`; }
+  });
+  document.getElementById("shareMake").focus();
+}
+async function checkShareIn(){
+  if (!location.hash.startsWith(SHARE_KEY)) return;
+  const str = location.hash.slice(SHARE_KEY.length);
+  history.replaceState(null, "", location.pathname + location.search);
+  let data;
+  try{ data = await unpackShare(str); }catch(e){ toast("받은 링크를 읽지 못했어요. 링크가 잘렸는지 확인해 주세요."); return; }
+  if (!data || !Array.isArray(data.z)) return;
+  const n = data.z.reduce((a, z) => a + (z.i || []).length, 0);
+  const other = data.app && data.app !== APP_ID;
+  document.getElementById("shareTitle").textContent = "받은 준비물 세팅";
+  document.getElementById("shareBody").innerHTML = `
+    <p>구역 ${data.z.length}개, 항목 ${n}개가 들어 있어요.${other ? ` <b>${data.app === "cam" ? "캠첵!" : "트립첵!"}</b>에서 만든 세팅이에요.` : ""}</p>
+    <ul class="share-list">${data.z.map(z => `<li><b>${esc(z.n)}</b> <span>${(z.i || []).length}개</span></li>`).join("")}</ul>
+    <div class="share-btns"><button class="primary" id="shareMerge">내 목록에 더하기</button><button class="chip" id="shareReplace">이걸로 바꾸기</button></div>
+    <p class="share-note">더하기: 나한테 없는 항목만 들어와요. 바꾸기: 지금 목록과 체크가 받은 세팅으로 바뀌어요.</p>
+    <p class="msg" id="shareMsg" aria-live="polite"></p>`;
+  shareEl.hidden = false;
+  document.getElementById("shareMerge").addEventListener("click", () => {
+    const r = applyShared(data, "merge"); closeShare(); setTab("home");
+    toast(r.addedItems ? `항목 ${r.addedItems}개를 더했어요.${r.addedZones ? ` (새 구역 ${r.addedZones}개)` : ""}` : "새로 더할 항목이 없었어요. 이미 다 있어요.");
+  });
+  let sure = false;
+  document.getElementById("shareReplace").addEventListener("click", e => {
+    if (!sure){ sure = true; e.target.textContent = "정말 바꿀까요? 한 번 더 누르기"; return; }
+    applyShared(data, "replace"); closeShare(); setTab("home"); toast("받은 세팅으로 바꿨어요.");
+  });
+}
+function closeShare(){ shareEl.hidden = true; }
+document.getElementById("shareClose").addEventListener("click", closeShare);
+shareEl.addEventListener("click", e => { if (e.target === shareEl) closeShare(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !shareEl.hidden) closeShare(); });
+document.getElementById("shareSet").addEventListener("click", openShareOut);
+document.getElementById("shareFoot").addEventListener("click", openShareOut);
+window.addEventListener("hashchange", checkShareIn);
+checkShareIn();
+
+/* ---------- 업데이트 소식 ---------- */
+const NEWS_KEY = APP_ID + "-news-seen";
+const newsEl = document.getElementById("newsModal");
+function newsSeen(){ try{ return localStorage.getItem(NEWS_KEY); }catch(e){ return null; } }
+function markNews(){
+  const unseen = newsSeen() !== NEWS[0].v;
+  document.querySelectorAll(".news-dot").forEach(el => el.hidden = !unseen);
+}
+function openNews(){
+  document.getElementById("newsBody").innerHTML = NEWS.map(n => `<section class="news-item"><h4><span>${esc(n.v)}</span>${esc(n.d)}</h4><ul>${n.items.map(t => `<li>${esc(t)}</li>`).join("")}</ul></section>`).join("");
+  newsEl.hidden = false;
+  try{ localStorage.setItem(NEWS_KEY, NEWS[0].v); }catch(e){}
+  markNews();
+  document.getElementById("newsClose").focus();
+}
+document.getElementById("newsSet").addEventListener("click", openNews);
+document.getElementById("newsFoot").addEventListener("click", openNews);
+document.getElementById("newsClose").addEventListener("click", () => { newsEl.hidden = true; });
+newsEl.addEventListener("click", e => { if (e.target === newsEl) newsEl.hidden = true; });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !newsEl.hidden) newsEl.hidden = true; });
+document.getElementById("newsVer").textContent = "지금 " + NEWS[0].v;
+markNews();
 </script>
 <script type="module" src="app-firebase.js"></script>
 </body>
