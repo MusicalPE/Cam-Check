@@ -294,7 +294,10 @@ footer{font-size:12px;color:var(--muted);text-align:center}
 }
 @media (max-width:560px){
   header{grid-template-columns:1fr}
-  .meter{text-align:left}
+  .meter{text-align:left;display:grid;grid-template-columns:1fr auto;grid-template-areas:"num qr" "cap qr";align-items:center;column-gap:12px}
+  .meter .num{grid-area:num}
+  .meter .cap{grid-area:cap}
+  .meter .qr-btn{grid-area:qr;margin:0;align-self:center}
   .records summary{grid-template-columns:auto minmax(0,1fr)}
   .rmeta{grid-column:1/-1}
 }
@@ -379,6 +382,7 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     <ol class="records" id="records"></ol>
   </section>
 
+  <div class="conn-foot"><button class="link" id="installAny" hidden>앱으로 설치하기</button></div>
   <footer id="foot">Made by 음악적체육인</footer>
 
   <div class="qr-modal" id="qrModal" hidden>
@@ -1274,23 +1278,35 @@ const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform
 const installBox = document.getElementById("install"), installText = document.getElementById("installText"), installGo = document.getElementById("installGo");
 let installEvt = null;
 /* 한 번 설치했거나 앱으로 연 기기는 브라우저에서도 설치 안내를 다시 띄우지 않음 */
-const IKEY = "campfb-installed";
+const IKEY = "camcheck-installed";
 if (STANDALONE) lsSet(IKEY, "1");
+const UA = navigator.userAgent;
+const MOBILE = /android|iphone|ipad|ipod/i.test(UA) || IOS;
+function installHow(){
+  if (/KAKAOTALK/i.test(UA)) return "카카오톡 안에서는 설치가 안 돼요. 오른쪽 위 [⋮] → [다른 브라우저로 열기]로 연 다음 설치해 주세요.";
+  if (/NAVER\(inapp|Instagram|FBAN|FBAV|Line\//i.test(UA)) return "이 앱 안의 브라우저에서는 설치가 안 돼요. 메뉴에서 [다른 브라우저로 열기]를 고른 다음 설치해 주세요.";
+  if (IOS) return "아이폰은 사파리 아래쪽 [공유] 버튼을 누르고 [홈 화면에 추가]를 고르세요.";
+  if (/SamsungBrowser/i.test(UA)) return "삼성 인터넷은 주소창 오른쪽 [⬇] 설치 버튼을 누르거나, 아래 [≡] 메뉴 → [현재 페이지 추가] → [홈 화면]을 고르세요.";
+  if (/android/i.test(UA)) return "크롬은 오른쪽 위 [⋮] 메뉴 → [홈 화면에 추가] 또는 [앱 설치]를 고르세요.";
+  return "브라우저 주소창 오른쪽의 설치 아이콘이나, 메뉴의 [앱 설치]를 눌러 주세요.";
+}
 const installLater = () => {
   if (STANDALONE || lsGet(IKEY)) return "1";
   try{ return sessionStorage.getItem("camping-install-later"); }catch(e){ return null; }
 };
+function showInstall(force){
+  if (STANDALONE) return;
+  if (!force && installLater()) return;
+  if (installEvt){ installText.textContent = "휴대폰에 앱으로 설치하면 아이콘을 눌러 바로 열 수 있어요."; installGo.hidden = false; }
+  else { installText.textContent = installHow(); installGo.hidden = true; }
+  installBox.hidden = false;
+  if (force) installBox.scrollIntoView({behavior:"smooth", block:"center"});
+}
 if ("serviceWorker" in navigator && location.protocol === "https:"){
   navigator.serviceWorker.register("sw.js").catch(() => {});
 }
-window.addEventListener("beforeinstallprompt", e => {
-  e.preventDefault(); installEvt = e;
-  if (!STANDALONE && !installLater()){ installText.textContent = "휴대폰에 앱으로 설치하면 아이콘을 눌러 바로 열 수 있어요."; installGo.hidden = false; installBox.hidden = false; }
-});
-if (IOS && !STANDALONE && !installLater()){
-  installText.textContent = "아이폰은 아래 [공유] 버튼을 누르고 [홈 화면에 추가]를 고르면 앱처럼 쓸 수 있어요. 설치한 앱에서는 처음 한 번 연결 링크를 붙여 넣어야 해요.";
-  installGo.hidden = true; installBox.hidden = false;
-}
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; showInstall(false); });
+if (MOBILE && !STANDALONE) setTimeout(() => { if (installBox.hidden) showInstall(false); }, 2500);   // 설치 버튼을 안 주는 브라우저에서는 방법을 알려 줌
 installGo.addEventListener("click", async () => {
   if (!installEvt) return;
   installEvt.prompt();
@@ -1302,9 +1318,9 @@ document.getElementById("installLater").addEventListener("click", () => {
   try{ sessionStorage.setItem("camping-install-later", "1"); }catch(e){}
 });
 window.addEventListener("appinstalled", () => { installBox.hidden = true; lsSet(IKEY, "1"); });
-if (navigator.getInstalledRelatedApps){
-  navigator.getInstalledRelatedApps().then(list => { if (list && list.length){ lsSet(IKEY, "1"); installBox.hidden = true; } }).catch(() => {});
-}
+const installAny = document.getElementById("installAny");
+installAny.hidden = STANDALONE;
+installAny.addEventListener("click", () => showInstall(true));
 
 /* ---------- 시작 ---------- */
 fillTrip(); render(); renderAccount();
