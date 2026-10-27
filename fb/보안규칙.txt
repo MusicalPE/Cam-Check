@@ -1,0 +1,40 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // 내 계정이 어느 가족 공간에 들어 있는지 (나만 읽고 씀)
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    // 가족 공간: 가족(members)만 읽고 씀
+    match /families/{fid} {
+      function isMember() { return signedIn() && request.auth.uid in resource.data.members; }
+
+      allow read: if isMember();
+
+      // 만들 때는 만든 사람 혼자 가족
+      allow create: if signedIn()
+        && request.resource.data.owner == request.auth.uid
+        && request.resource.data.members == [request.auth.uid];
+
+      // 가족은 고칠 수 있음(만든 사람은 못 바꿈)
+      // 가족이 아닌 사람은 초대 코드를 알 때 자기 자신만 가족으로 넣을 수 있음
+      allow update: if (isMember() && request.resource.data.owner == resource.data.owner)
+        || (signedIn()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members', 'memberInfo', 'joinWith'])
+            && request.resource.data.joinWith == resource.data.invite
+            && request.resource.data.members.toSet() == resource.data.members.toSet().union([request.auth.uid].toSet()));
+
+      allow delete: if signedIn() && request.auth.uid == resource.data.owner;
+
+      // 캠핑 기록: 가족만
+      match /records/{rid} {
+        allow read, write: if signedIn()
+          && request.auth.uid in get(/databases/$(database)/documents/families/$(fid)).data.members;
+      }
+    }
+  }
+}
