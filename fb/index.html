@@ -308,6 +308,21 @@ footer{font-size:12px;color:var(--muted);text-align:center}
 
   <div class="acct" id="acct"><span class="dot" id="acctDot"></span><span id="acctText">불러오는 중…</span><span class="grow"></span><span id="acctBtns"></span></div>
 
+  <section class="fam" id="imp" hidden aria-labelledby="impTitle">
+    <div class="lp-head"><h3 id="impTitle">시트판 자료 가져오기</h3><button class="link" id="impClose">닫기</button></div>
+    <p id="impText">구글 시트에 쌓아 둔 캠핑 기록과 준비물 목록을 이 가족 공간으로 옮겨요. 시트에 있는 자료는 지워지지 않아요.</p>
+    <div id="impConn">
+      <div class="row"><input class="field" id="impApi" type="url" placeholder="시트판 웹 앱 주소(/exec)" aria-label="시트판 웹 앱 주소"><input class="field" id="impKey" type="password" placeholder="비밀 코드" aria-label="시트판 비밀 코드"></div>
+    </div>
+    <div class="row"><button class="primary" id="impLoad">시트판 자료 불러오기</button></div>
+    <div id="impPick" hidden>
+      <label class="confirm"><input type="checkbox" id="impRec" checked> <span id="impRecText">캠핑 기록</span></label>
+      <label class="confirm"><input type="checkbox" id="impSet"> 준비물 목록·상황 설정도 시트판 것으로 바꾸기 <span class="camper">(지금 가족판 목록은 덮어써져요)</span></label>
+      <div class="row"><button class="primary" id="impGo">가족 공간으로 옮기기</button></div>
+    </div>
+    <div class="msg" id="impMsg" aria-live="polite"></div>
+  </section>
+
   <section class="fam" id="fam" hidden aria-labelledby="famTitle">
     <h3 id="famTitle">가족 공간 만들기</h3>
     <p id="famText">가족 공간을 만들면 이 목록이 거기로 올라가고, 가족을 QR로 초대해 함께 체크할 수 있어요.</p>
@@ -1136,13 +1151,15 @@ function renderAccount(){
   } else if (a.phase === "in"){
     const ms = (FAMILY.members || []).map(m => `<span class="member">${esc(m.name)}${m.uid === a.user.uid ? " (나)" : ""}</span>`).join("");
     acctText.innerHTML = `<span class="who"><b>${esc(FAMILY.name)}</b><span class="members">${ms}</span></span>`;
-    acctBtns.innerHTML = '<button class="link" id="logoutBtn">로그아웃</button>';
+    acctBtns.innerHTML = '<button class="link" id="importBtn">시트판 자료 가져오기</button> · <button class="link" id="logoutBtn">로그아웃</button>';
   }
   if (a.phase !== "in" && a.phase !== "noconfig") setSync(a.phase === "loading" ? "불러오는 중…" : "로그인하지 않아 이 기기에만 저장돼요.");
   if (a.phase === "noconfig") setSync("이 기기에만 저장돼요.");
 }
 acctBtns.addEventListener("click", e => {
-  const b = e.target.closest("button"); if (!b || !window.FBAPP) return;
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "importBtn"){ openImport(); return; }
+  if (!window.FBAPP) return;
   if (b.id === "loginBtn"){ b.disabled = true; window.FBAPP.login().catch(err => { b.disabled = false; acctText.textContent = "로그인하지 못했어요. " + (err && err.message || ""); }); }
   if (b.id === "logoutBtn") window.FBAPP.logout();
 });
@@ -1156,6 +1173,73 @@ document.getElementById("famCreate").addEventListener("click", () => {
 });
 
 /* 파이어베이스 스크립트가 부르는 연결점 */
+/* ---------- 시트판 자료 가져오기 ---------- */
+const impEl = document.getElementById("imp"), impMsg = document.getElementById("impMsg");
+let impData = null;
+function sheetConn(){ try{ return JSON.parse(lsGet("camping-conn-v1") || "{}") || {}; }catch(e){ return {}; } }
+function openImport(){
+  const c = sheetConn();
+  document.getElementById("impApi").value = c.api || "";
+  document.getElementById("impKey").value = c.key || "";
+  document.getElementById("impText").textContent = c.api
+    ? "이 기기에 시트판 연결이 남아 있어서 주소와 비밀 코드를 채워 두었어요. [불러오기]를 누르세요. 시트에 있는 자료는 지워지지 않아요."
+    : "시트판 웹 앱 주소(/exec)와 비밀 코드를 넣고 [불러오기]를 누르세요. 시트에 있는 자료는 지워지지 않아요.";
+  document.getElementById("impPick").hidden = true; impMsg.textContent = ""; impData = null;
+  impEl.hidden = false; impEl.scrollIntoView({behavior:"smooth", block:"start"});
+}
+document.getElementById("impClose").addEventListener("click", () => { impEl.hidden = true; });
+document.getElementById("impLoad").addEventListener("click", async () => {
+  let api = document.getElementById("impApi").value.trim(), key = document.getElementById("impKey").value;
+  try{ const u = new URL(api); if (u.searchParams.get("api")){ key = u.searchParams.get("key") || key; api = u.searchParams.get("api"); } }catch(e){}
+  impMsg.className = "msg";
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(api)){ impMsg.className = "msg err"; impMsg.textContent = "웹 앱 주소는 https://script.google.com/ 으로 시작하고 /exec 로 끝나야 해요."; return; }
+  const btn = document.getElementById("impLoad"); btn.disabled = true; impMsg.textContent = "시트에서 불러오는 중…";
+  try{
+    const r = await fetch(api, {method:"POST", body:JSON.stringify({action:"get", key})});
+    let j; try{ j = JSON.parse(await r.text()); }catch(e){ throw new Error("시트가 자료 대신 로그인 화면을 보냈어요. 배포 액세스가 '모든 사용자'인지 확인해 주세요."); }
+    if (!j.ok) throw new Error(j.error || "시트가 대답하지 않았어요.");
+    let settings = null; try{ settings = j.settings ? JSON.parse(j.settings) : null; }catch(e){}
+    impData = {records: j.records || [], settings};
+    const done = new Set(records.map(x => x.srcId).filter(Boolean));
+    const fresh = impData.records.filter(x => !done.has(x.id));
+    impData.fresh = fresh;
+    document.getElementById("impRecText").textContent = `캠핑 기록 ${fresh.length}개` + (impData.records.length !== fresh.length ? ` (이미 옮긴 ${impData.records.length - fresh.length}개는 건너뜀)` : "");
+    document.getElementById("impRec").checked = fresh.length > 0; document.getElementById("impRec").disabled = !fresh.length;
+    document.getElementById("impSet").disabled = !(settings && settings.zones);
+    document.getElementById("impPick").hidden = false;
+    impMsg.textContent = `시트에서 기록 ${impData.records.length}개${settings && settings.zones ? "와 준비물 목록" : ""}을 찾았어요. 옮길 것을 고르세요.`;
+  }catch(err){ impMsg.className = "msg err"; impMsg.textContent = "불러오지 못했어요. " + (err && err.message || ""); }
+  finally{ btn.disabled = false; }
+});
+document.getElementById("impGo").addEventListener("click", async () => {
+  if (!impData || !REMOTE) return;
+  const doRec = document.getElementById("impRec").checked, doSet = document.getElementById("impSet").checked;
+  if (!doRec && !doSet){ impMsg.className = "msg err"; impMsg.textContent = "옮길 것을 하나 이상 골라 주세요."; return; }
+  const btn = document.getElementById("impGo"); btn.disabled = true; impMsg.className = "msg";
+  try{
+    if (doSet && impData.settings && impData.settings.zones){
+      const s0 = impData.settings;
+      const next = Object.assign({}, state, {zones:s0.zones, trip:s0.trip || {}, memo:s0.memo || "", f:s0.f || state.f, checked:s0.checked || {}});
+      if (Array.isArray(s0.labels)) next.labels = s0.labels; else delete next.labels;
+      const keepF = s0.f; state = next; state.f = keepF || {hide:false}; normalize();
+      await REMOTE.saveSettings(Object.assign(settingsObj(), {checked:state.checked}));
+      fillTrip(); render();
+    }
+    let n = 0;
+    if (doRec){
+      for (const r of impData.fresh){
+        const copy = Object.assign({}, r, {srcId:r.id}); delete copy.id;
+        await REMOTE.addRecord(copy); n++;
+        impMsg.textContent = `기록 옮기는 중… ${n} / ${impData.fresh.length}`;
+      }
+    }
+    impMsg.textContent = `옮겼어요.${doRec ? ` 캠핑 기록 ${n}개` : ""}${doSet ? (doRec ? ", " : " ") + "준비물 목록" : ""}이 가족 공간에 들어갔어요.`;
+    document.getElementById("impPick").hidden = true; impData = null;
+    setTimeout(() => records.forEach(r => { if (r.placeId) publishRating(r.placeId); }), 2500);
+  }catch(err){ impMsg.className = "msg err"; impMsg.textContent = "옮기는 중에 멈췄어요. 다시 누르면 이미 옮긴 기록은 건너뛰어요. " + (err && err.message || ""); }
+  finally{ btn.disabled = false; }
+});
+
 window.CAMP = {
   setAccount(info){ ACCOUNT = info; renderAccount(); },
   enterFamily(fam, remote){ FAMILY = fam; REMOTE = remote; ACCOUNT = Object.assign({}, ACCOUNT, {phase:"in"}); renderAccount(); showConnState(); },
