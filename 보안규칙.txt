@@ -58,5 +58,17 @@ service cloud.firestore {
         allow delete: if isFamily();
       }
     }
+
+    // 준비물 세팅 공유: 짧은 코드를 아는 사람은 누구나 읽음(로그인 전에도), 만들기는 로그인한 사람만, 고치기·지우기는 만든 사람만
+    // (목록 이름만 담기고 체크·가족·기록은 담기지 않음)
+    match /shares/{code} {
+      allow get: if true;
+      allow list: if false;
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['d', 'app', 'by', 'createdAt'])
+        && request.resource.data.by == request.auth.uid
+        && request.resource.data.d is string && request.resource.data.d.size() < 60000;
+      allow delete: if signedIn() && resource.data.by == request.auth.uid;
+    }
   }
 }

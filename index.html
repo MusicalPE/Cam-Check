@@ -421,6 +421,8 @@ a.chip{text-decoration:none;display:inline-block}
 .share-btns{display:flex;gap:10px;flex-wrap:wrap}
 .share-btns .primary{flex:1 1 auto}
 .share-note{font-size:12.5px!important}
+.share-qr{width:min(220px,70%);align-self:center}
+.share-short{font-family:var(--f-mono);font-size:13px;color:var(--forest);text-align:center;word-break:break-all}
 .share-url{margin-top:8px;font-size:12px;word-break:break-all}
 .news-body{display:flex;flex-direction:column;gap:14px;max-height:60vh;overflow-y:auto}
 .news-item h4{margin:0 0 6px;font-size:14px;color:var(--muted);display:flex;gap:8px;align-items:center}
@@ -1637,7 +1639,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
-  {v:"1.5.0", d:"2026. 10. 27.", items:["준비물 세팅 공유: 우리 목록을 링크로 보내고, 받은 목록을 더하거나 통째로 바꿀 수 있어요.","업데이트 소식을 설정에서 볼 수 있어요.","자매 앱 트립첵!(여행 준비물)으로 바로 가는 버튼이 생겼어요."]},
+  {v:"1.5.0", d:"2026. 10. 27.", items:["준비물 세팅 공유: 우리 목록을 짧은 주소와 QR로 보내고, 받은 목록을 더하거나 통째로 바꿀 수 있어요.","업데이트 소식을 설정에서 볼 수 있어요.","자매 앱 트립첵!(여행 준비물)으로 바로 가는 버튼이 생겼어요."]},
   {v:"1.4", d:"2026. 10. 27.", items:["꼭 챙길 물건 강조: 연필 → [꼭 챙기기]를 켜면 굵은 글씨와 꼭! 표시가 붙어요.","구역 이름을 누르면 구역이 접히고 펴져요.","화면 디자인을 새로 다듬었어요(흰 카드, 더 큰 체크칸)."]},
   {v:"1.3", d:"2026. 10.", items:["개인정보처리방침, 계정·자료 관리(기록 내려받기, 가족에서 나가기, 계정 지우기).","휴대폰 아래 탭을 기록 · 체크 · 설정·가족 세 칸으로 정리.","별점을 반 개 단위로."]}
 ];
@@ -1697,30 +1699,59 @@ function applyShared(data, mode){
   return {addedItems, addedZones};
 }
 const shareEl = document.getElementById("shareModal");
+function shareQR(url){
+  try{ const q = qrcode(0, "M"); q.addData(url); q.make(); return q.createSvgTag({cellSize:5, margin:2, scalable:true}); }catch(e){ return ""; }
+}
+const waitFB = (ms = 10000) => new Promise(res => {
+  const t0 = Date.now(); (function poll(){ if (window.FBAPP && window.FBAPP.getShare) return res(window.FBAPP); if (Date.now() - t0 > ms) return res(null); setTimeout(poll, 200); })();
+});
 function openShareOut(){
   const box = document.getElementById("shareBody");
   const n = state.zones.reduce((a, z) => a + z.items.length, 0);
-  box.innerHTML = `<p>지금 우리 목록(구역 ${state.zones.length}개, 항목 ${n}개)을 링크로 만들어요. 체크 상태, 가족 이름, 기록은 들어가지 않아요.</p>
-    <div class="row"><button class="primary" id="shareMake">링크 만들기</button></div><p class="msg" id="shareMsg" aria-live="polite"></p>`;
+  box.innerHTML = `<p>지금 우리 목록(구역 ${state.zones.length}개, 항목 ${n}개)을 짧은 주소와 QR로 만들어요. 체크 상태, 가족 이름, 기록은 들어가지 않아요.</p>
+    <div class="row"><button class="primary" id="shareMake">공유 주소 만들기</button></div><p class="msg" id="shareMsg" aria-live="polite"></p>`;
   document.getElementById("shareTitle").textContent = "준비물 세팅 공유";
   shareEl.hidden = false;
-  document.getElementById("shareMake").addEventListener("click", async () => {
-    const msg = document.getElementById("shareMsg");
-    const url = location.origin + location.pathname + SHARE_KEY + await packShare(shareObj());
-    const text = `${APP_NAME} 준비물 세팅을 보내요. 열어서 [내 목록에 더하기]나 [이걸로 바꾸기]를 누르면 돼요.`;
-    if (navigator.share){
-      try{ await navigator.share({title:APP_NAME + " 준비물 세팅", text, url}); msg.textContent = "보냈어요."; return; }
-      catch(e){ if (e && e.name === "AbortError") return; }
+  document.getElementById("shareMake").addEventListener("click", async e => {
+    const btn = e.currentTarget, msg = document.getElementById("shareMsg");
+    btn.disabled = true; msg.className = "msg"; msg.textContent = "만드는 중…";
+    const packed = await packShare(shareObj());
+    let url = null;
+    const fb = window.FBAPP && window.FBAPP.putShare;
+    if (fb && (ACCOUNT.phase === "in" || ACCOUNT.phase === "nofamily")){
+      try{ url = location.origin + location.pathname + "#s=" + await Promise.race([window.FBAPP.putShare(packed, APP_ID), new Promise((_, rej) => setTimeout(() => rej(new Error("시간 초과")), 8000))]); }catch(err){ console.warn(err); }
     }
-    try{ await navigator.clipboard.writeText(url); msg.textContent = "링크를 복사했어요. 카톡이나 문자에 붙여 넣어 보내세요."; }
-    catch(e){ msg.innerHTML = `아래 링크를 길게 눌러 복사해 주세요.<textarea class="field share-url" readonly rows="3">${esc(url)}</textarea>`; }
+    const short = !!url;
+    if (!url) url = location.origin + location.pathname + SHARE_KEY + packed;   // 로그인 전이거나 인터넷이 없으면 긴 주소
+    const text = `${APP_NAME} 준비물 세팅을 보내요. 열어서 [내 목록에 더하기]나 [이걸로 바꾸기]를 누르면 돼요.`;
+    box.innerHTML = `<p>${short ? "이 QR을 찍거나 주소를 보내 주세요." : "로그인하지 않았거나 인터넷이 약해서 긴 주소로 만들었어요. 로그인하면 짧은 주소와 QR이 나와요."}</p>
+      ${short ? `<div class="qr-box share-qr">${shareQR(url)}</div><div class="share-short">${esc(url.replace(/^https?:\/\//, ""))}</div>` : ""}
+      <div class="share-btns">${navigator.share ? '<button class="primary" id="shareSend">보내기</button>' : ""}<button class="chip" id="shareCopy">주소 복사</button></div>
+      <p class="msg" id="shareMsg" aria-live="polite"></p>`;
+    const m = () => document.getElementById("shareMsg");
+    const sendBtn = document.getElementById("shareSend");
+    if (sendBtn) sendBtn.addEventListener("click", async () => {
+      try{ await navigator.share({title:APP_NAME + " 준비물 세팅", text, url}); m().textContent = "보냈어요."; }catch(err){}
+    });
+    document.getElementById("shareCopy").addEventListener("click", async () => {
+      try{ await navigator.clipboard.writeText(url); m().textContent = "주소를 복사했어요. 카톡이나 문자에 붙여 넣어 보내세요."; }
+      catch(err){ m().innerHTML = `아래 주소를 길게 눌러 복사해 주세요.<textarea class="field share-url" readonly rows="3">${esc(url)}</textarea>`; }
+    });
   });
   document.getElementById("shareMake").focus();
 }
 async function checkShareIn(){
-  if (!location.hash.startsWith(SHARE_KEY)) return;
-  const str = location.hash.slice(SHARE_KEY.length);
+  const h = location.hash;
+  if (!h.startsWith(SHARE_KEY) && !h.startsWith("#s=")) return;
   history.replaceState(null, "", location.pathname + location.search);
+  let str;
+  if (h.startsWith("#s=")){
+    const code = h.slice(3).replace(/[^a-z0-9]/gi, "");
+    const fb = await waitFB();
+    if (!fb){ toast("공유 목록을 불러오지 못했어요. 인터넷 연결을 확인하고 다시 열어 주세요."); return; }
+    try{ const doc = await fb.getShare(code); str = doc && doc.d; }catch(e){ console.warn(e); }
+    if (!str){ toast("공유 목록을 찾지 못했어요. 주소가 맞는지 확인해 주세요."); return; }
+  } else str = h.slice(SHARE_KEY.length);
   let data;
   try{ data = await unpackShare(str); }catch(e){ toast("받은 링크를 읽지 못했어요. 링크가 잘렸는지 확인해 주세요."); return; }
   if (!data || !Array.isArray(data.z)) return;

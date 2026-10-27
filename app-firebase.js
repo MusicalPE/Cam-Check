@@ -132,6 +132,19 @@ async function start(){
         } else throw friendly(e);
       }
     },
+    /* 준비물 세팅 공유: shares/{짧은 코드} 에 목록만 올림(체크·가족·기록 없음). 코드를 아는 사람만 읽음 */
+    async putShare(d, app){
+      if (!me) throw new Error("먼저 로그인해 주세요.");
+      for (let k = 0; k < 4; k++){
+        const code = randomCode(7);
+        try{ await F.setDoc(F.doc(db, "shares", code), { d, app, by: me.uid, createdAt: F.serverTimestamp() }); return code; }
+        catch(e){ if (k === 3) throw friendly(e); }
+      }
+    },
+    async getShare(code){
+      const s = await F.getDoc(F.doc(db, "shares", code));
+      return s.exists() ? s.data() : null;
+    },
     async createFamily(name, data, localRecords){
       if (!me) throw new Error("먼저 로그인해 주세요.");
       const fref = F.doc(F.collection(db, "families"));
