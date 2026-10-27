@@ -282,6 +282,7 @@ ul.items{min-height:10px}
 .place-list .pn{font-size:14.5px;color:var(--ink);font-weight:700}
 .place-list .pa{font-size:12.5px;color:var(--muted)}
 .place-list .pb{font-size:11.5px;color:var(--accent);font-weight:700}
+.place-list .pnote{color:var(--danger);white-space:normal;line-height:1.5;padding:8px 10px}
 .place-list .phead{font-size:11.5px;font-weight:700;color:var(--muted);padding:6px 10px 4px;cursor:default;background:transparent!important}
 .place-links{display:flex;gap:10px;font-size:12.5px;font-weight:600;min-height:0;margin-top:2px}
 .place-links a{color:var(--forest);text-underline-offset:4px}
@@ -1176,7 +1177,7 @@ function reopen(ids){ ids.forEach(id => { const s = document.querySelector(`#rec
 
 /* 캠핑장 이름 칸: 다녀온 곳 + 카카오 장소 검색 */
 const placeInput = document.getElementById("tripPlace"), placeList = document.getElementById("placeList");
-let kakaoPlaces = null, placeTimer = null, placeItems = [], placeSel = -1, placeSeq = 0;
+let kakaoPlaces = null, placeTimer = null, placeItems = [], placeSel = -1, placeSeq = 0, placeNote = "", kakaoWhy = "";
 function loadKakao(){
   if (kakaoPlaces !== null) return Promise.resolve(kakaoPlaces);
   const key = (window.KAKAO_JS_KEY || "").trim();
@@ -1184,8 +1185,10 @@ function loadKakao(){
   return new Promise(res => {
     const sc = document.createElement("script");
     sc.src = "https://dapi.kakao.com/v2/maps/sdk.js?appkey=" + encodeURIComponent(key) + "&libraries=services&autoload=false";
-    sc.onload = () => { try{ kakao.maps.load(() => { kakaoPlaces = new kakao.maps.services.Places(); res(kakaoPlaces); }); }catch(e){ kakaoPlaces = false; res(false); } };
-    sc.onerror = () => { kakaoPlaces = false; res(false); };
+    const fail = why => { kakaoPlaces = null; kakaoWhy = why; res(false); };   // 실패는 기억하지 않고 다음에 다시 시도
+    const tm = setTimeout(() => fail("카카오 검색이 응답하지 않아요. 인터넷을 확인해 주세요."), 8000);
+    sc.onload = () => { try{ kakao.maps.load(() => { clearTimeout(tm); kakaoPlaces = new kakao.maps.services.Places(); res(kakaoPlaces); }); }catch(e){ clearTimeout(tm); fail("카카오 검색을 켜지 못했어요. 카카오 개발자 사이트에서 카카오맵 사용 설정과 사이트 도메인을 확인해 주세요."); } };
+    sc.onerror = () => { clearTimeout(tm); sc.remove(); fail("카카오 검색을 불러오지 못했어요. 카카오 개발자 사이트에 https://musicalpe.github.io 도메인이 등록됐는지 확인해 주세요."); };
     document.head.appendChild(sc);
   });
 }
@@ -1195,7 +1198,7 @@ function renderPlaceLinks(){
 }
 function closePlaces(){ placeList.hidden = true; placeInput.setAttribute("aria-expanded", "false"); placeSel = -1; }
 function showPlaces(){
-  if (!placeItems.length){ closePlaces(); return; }
+  if (!placeItems.length && !placeNote){ closePlaces(); return; }
   let html = "", lastGroup = "";
   placeItems.forEach((p, i) => {
     if (p.group !== lastGroup){ html += `<li class="phead" role="presentation">${p.group}</li>`; lastGroup = p.group; }
@@ -1204,6 +1207,7 @@ function showPlaces(){
       camper && camper.n ? `캠퍼들 ★${camper.avg} (${camper.n})` : ""].filter(Boolean).join(" · ");
     html += `<li role="option" id="po-${i}" data-i="${i}" aria-selected="${i === placeSel}"><span class="pn">${esc(p.name)}</span>${p.addr?`<span class="pa">${esc(p.addr)}</span>`:""}${badge?`<span class="pb">${badge}</span>`:""}</li>`;
   });
+  if (placeNote) html += `<li class="phead pnote" role="presentation">${esc(placeNote)}</li>`;
   placeList.innerHTML = html; placeList.hidden = false; placeInput.setAttribute("aria-expanded", "true");
 }
 function searchPlaces(){
@@ -1213,12 +1217,15 @@ function searchPlaces(){
   const mine = ourPlaces().filter(p => (p.name||"").toLowerCase().includes(ql))
     .sort((a,b) => b.visits - a.visits).slice(0,4)
     .map(p => ({group:"다녀온 곳", name:p.name, addr:p.addr, url:p.url, id:p.id, ours:p.avg, visits:p.visits}));
-  placeItems = mine; placeSel = -1; showPlaces();
+  placeItems = mine; placeSel = -1; placeNote = ""; showPlaces();
   if (q.length < 2) return;
   loadKakao().then(ps => {
-    if (!ps || seq !== placeSeq) return;
+    if (seq !== placeSeq) return;
+    if (!ps){ placeNote = (window.KAKAO_JS_KEY || "").trim() ? kakaoWhy : ""; showPlaces(); return; }
     ps.keywordSearch(q, (data, status) => {
-      if (seq !== placeSeq || status !== kakao.maps.services.Status.OK) return;
+      if (seq !== placeSeq) return;
+      if (status === kakao.maps.services.Status.ZERO_RESULT){ placeNote = "카카오에서 찾은 곳이 없어요. 이름을 조금 바꿔 보세요."; showPlaces(); return; }
+      if (status !== kakao.maps.services.Status.OK){ placeNote = "카카오 검색 오류가 났어요. 카카오 개발자 사이트의 도메인·카카오맵 설정을 확인해 주세요."; showPlaces(); return; }
       const known = new Set(mine.map(p => p.id).filter(Boolean));
       const found = data.filter(d => !known.has("k" + d.id)).slice(0, 6).map(d => {
         const op = ourPlaces().find(p => p.id === "k" + d.id);
