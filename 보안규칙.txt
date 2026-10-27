@@ -52,7 +52,7 @@ service cloud.firestore {
         allow create, update: if isFamily()
           && request.resource.data.keys().hasOnly(['stars', 'visits', 'updatedAt'])
           && request.resource.data.stars is number
-          && request.resource.data.stars >= 1 && request.resource.data.stars <= 5;
+          && request.resource.data.stars >= 0.5 && request.resource.data.stars <= 5;
         allow delete: if isFamily();
       }
     }

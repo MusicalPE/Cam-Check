@@ -253,10 +253,11 @@ ul.items{min-height:6px}
 .place-links{display:flex;gap:10px;font-size:12px;min-height:0}
 .place-links a{color:var(--forest);text-underline-offset:3px}
 .stars{display:inline-flex;gap:2px}
-.star{border:none;background:none;padding:2px;cursor:pointer;color:var(--line);font-size:24px;line-height:1}
-.star[aria-pressed="true"]{color:#E7A93E}
-.star:hover{color:#E7A93E}
-.stars.sm .star{font-size:20px}
+.star{position:relative;border:none;background:none;padding:2px;cursor:pointer;font-size:26px;line-height:1;display:inline-block}
+.star .s-bg{color:var(--line)}
+.star .s-fg{position:absolute;left:2px;top:2px;overflow:hidden;white-space:nowrap;color:#E7A93E;pointer-events:none}
+.star:hover .s-bg{color:#F0CC8C}
+.stars.sm .star{font-size:22px}
 .rate-row{display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;font-size:13px;color:var(--muted)}
 .rstar{color:#C98A1E;font-weight:600;white-space:nowrap}
 .ranking{margin-top:16px;display:flex;flex-direction:column;gap:6px}
@@ -863,9 +864,18 @@ Object.entries(TRIP).forEach(([id,k]) => document.getElementById(id).addEventLis
 document.getElementById("memo").addEventListener("input", e => { state.memo = e.target.value; save(); });
 
 /* ---------- 캠핑장 찾기 · 우리 별점 ---------- */
+/* 별 하나의 왼쪽 반을 누르면 반 개, 오른쪽 반을 누르면 한 개 */
 function starsHTML(v, attrs, size){
-  return `<span class="stars ${size||""}" role="group" aria-label="별점">${[1,2,3,4,5].map(n =>
-    `<button type="button" class="star" ${attrs} data-v="${n}" aria-pressed="${n <= v}" aria-label="별 ${n}개">★</button>`).join("")}</span>`;
+  v = Number(v) || 0;
+  return `<span class="stars ${size||""}" role="group" aria-label="별점 ${v ? v + "점" : "없음"}">${[1,2,3,4,5].map(n => {
+    const fill = v >= n ? 100 : v >= n - 0.5 ? 50 : 0;
+    return `<button type="button" class="star" ${attrs} data-v="${n}" aria-pressed="${fill > 0}" aria-label="별 ${n}개 (왼쪽 반은 ${n - 0.5}개)"><span class="s-bg" aria-hidden="true">★</span><span class="s-fg" aria-hidden="true" style="width:${fill}%">★</span></button>`;
+  }).join("")}</span>`;
+}
+function starValue(e, b){
+  const n = Number(b.dataset.v), r = b.getBoundingClientRect();
+  if (!r.width || e.detail === 0) return n;              // 키보드로 누르면 한 개 단위
+  return (e.clientX - r.left) < r.width / 2 ? n - 0.5 : n;
 }
 function placeLinksHTML(name, url){
   const q = encodeURIComponent(name || "");
@@ -911,7 +921,7 @@ function publishRating(pid){
 function renderTripStars(){ document.getElementById("tripStars").innerHTML = starsHTML(Number(state.trip.rating)||0, 'data-trip="1"'); }
 document.getElementById("tripStars").addEventListener("click", e => {
   const b = e.target.closest(".star"); if (!b) return;
-  const v = Number(b.dataset.v);
+  const v = starValue(e, b);
   state.trip.rating = Number(state.trip.rating) === v ? "" : v;
   save(); renderTripStars();
 });
@@ -920,7 +930,7 @@ document.getElementById("records").addEventListener("click", e => {
   const b = e.target.closest(".star[data-rid]"); if (!b) return;
   e.preventDefault();
   const id = b.dataset.rid, r = records.find(x => x.id === id); if (!r) return;
-  const v = Number(r.rating) === Number(b.dataset.v) ? "" : Number(b.dataset.v);
+  const pick = starValue(e, b), v = Number(r.rating) === pick ? "" : pick;
   const open = [...document.querySelectorAll("#records details[open]")].map(d => d.querySelector(".star[data-rid]")?.dataset.rid);
   r.rating = v; renderRecords(); reopen(open);
   call("updateRecord", {id, rating:v}).then(l => {
