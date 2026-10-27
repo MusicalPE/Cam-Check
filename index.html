@@ -1246,6 +1246,11 @@ placeInput.addEventListener("keydown", e => {
     e.preventDefault(); placeSel = (placeSel + (e.key === "ArrowDown" ? 1 : -1) + placeItems.length) % placeItems.length;
     showPlaces(); placeInput.setAttribute("aria-activedescendant", "po-" + placeSel);
   } else if (e.key === "Enter" && placeSel >= 0){ e.preventDefault(); pickPlace(placeSel); }
+  else if (e.key === "Enter" && !e.isComposing){   // 엔터: 목록이 떠 있으면 맨 위 것을 고르고, 아니면 바로 찾기
+    e.preventDefault();
+    if (!placeList.hidden && placeItems.length) pickPlace(0);
+    else { clearTimeout(placeTimer); searchPlaces(); }
+  }
   else if (e.key === "Escape"){ closePlaces(); }
 });
 placeList.addEventListener("mousedown", e => e.preventDefault());
