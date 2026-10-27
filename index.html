@@ -551,6 +551,8 @@ body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:non
 
 @media (max-width:560px){body.fam-in #acct{display:none!important}}
 
+@media (max-width:560px){.foot-links{display:none}}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -656,14 +658,14 @@ li.imp.on .must{opacity:.4}
     <div class="set-row"><div><b>처음 목록으로 되돌리기</b><p>고친 구역·항목을 모두 처음 목록으로 바꿔요.</p></div><span id="defaultBox2"></span></div>
     <div class="set-row"><div><b>계정·자료 관리</b><p>기록 내려받기, 가족 공간에서 나가기, 계정 지우기</p></div><button class="chip" id="manageSet">열기</button></div>
     <div class="set-row"><div><b>자매 앱 트립첵!</b><p>여행 준비물도 같은 방식으로 챙겨요.<br>로그인은 따로 한 번 해요.</p></div><a class="chip" href="https://musicalpe.github.io/Trip-Check/">열기</a></div>
-    <div class="set-row"><div><b>준비물 세팅 공유</b><p>우리 목록을 링크로 보내요.<br>받은 사람은 더하거나 통째로 바꿀 수 있어요.</p></div><button class="chip" id="shareSet">보내기</button></div>
+    <div class="set-row"><div><b>준비물 세팅 공유</b><p>우리 목록을 짧은 주소와 QR로 보내요.<br>받은 사람은 더하거나 통째로 바꿀 수 있어요.</p></div><button class="chip" id="shareSet">보내기</button></div>
     <div class="set-row"><div><b>업데이트 소식 <span class="news-dot" hidden>새 소식</span></b><p id="newsVer"></p></div><button class="chip" id="newsSet">보기</button></div>
     <div class="set-row"><div><b>개인정보처리방침</b><p>어떤 정보를 어디에 두는지 알려 드려요.</p></div><a class="chip" href="privacy.html">보기</a></div>
     <div class="set-row"><div><b>앱으로 설치하기</b><p>홈 화면에 캠첵! 아이콘을 만들어요.</p></div><button class="chip" id="installSet">설치 방법</button></div>
   </section>
 
   <div class="conn-foot"><button class="link" id="installAny" hidden>앱으로 설치하기</button></div>
-  <footer id="foot" class="tabbed v-set"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button><br>Made by 음악적체육인</footer>
+  <footer id="foot" class="tabbed v-set"><span class="foot-links"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button><br></span>Made by 음악적체육인</footer>
 
   <div class="qr-modal" id="manage" hidden>
     <div class="qr-card mg-card" role="dialog" aria-modal="true" aria-labelledby="mgTitle">
