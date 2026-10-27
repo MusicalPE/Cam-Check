@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>캠핑 준비물 체크리스트</title>
+<title>캠첵!</title>
 <meta name="theme-color" content="#2F4A36">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="캠핑 체크">
+<meta name="apple-mobile-web-app-title" content="캠첵!">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -47,6 +47,10 @@ h1{font-family:var(--f-display);font-weight:400;font-size:clamp(34px,6vw,54px);l
 .trip label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
 .field{font-size:15px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:9px 12px;width:100%}
 
+.brand{display:flex;align-items:center;gap:18px;min-width:0}
+.logo{width:clamp(96px,16vw,148px);height:auto;flex:none;filter:drop-shadow(0 6px 14px rgba(47,74,54,.22))}
+.brand-text{min-width:0}
+.brand h1{font-size:clamp(22px,4.4vw,44px);white-space:nowrap}
 .meter{text-align:right}
 .qr-btn{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:600;border:1.5px solid var(--forest);background:transparent;color:var(--forest);border-radius:99px;padding:6px 13px;cursor:pointer;margin-bottom:8px}
 .qr-btn:hover{background:var(--forest);color:var(--on-forest)}
@@ -222,6 +226,22 @@ ul.items{min-height:6px}
 .install .btns{display:flex;gap:8px}
 .install button{font-size:13px;font-weight:600;border-radius:8px;padding:8px 14px;cursor:pointer;border:1px solid var(--on-forest);background:transparent;color:var(--on-forest)}
 .install button.go{background:var(--on-forest);color:var(--forest)}
+.acct{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;color:var(--muted);border:1px solid var(--line);background:var(--surface);border-radius:12px;padding:10px 14px}
+.acct b{color:var(--ink);font-weight:600}
+.acct .dot{width:8px;height:8px;border-radius:50%;background:var(--done);flex:none}
+.acct .dot.on{background:#3E9B5B}
+.acct .dot.off{background:var(--accent)}
+.acct .who{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.acct .grow{flex:1}
+.gbtn{display:inline-flex;align-items:center;gap:8px;font-size:14px;font-weight:600;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:8px 14px;cursor:pointer}
+.gbtn:hover{border-color:var(--forest)}
+.fam{background:var(--surface);border:1.5px solid var(--forest);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.fam h3{font-family:var(--f-body);font-weight:700;font-size:19px;margin:0;color:var(--forest)}
+.fam p{margin:0;font-size:14px;color:var(--muted)}
+.fam .row{display:flex;gap:8px;flex-wrap:wrap}
+.fam .row .field{flex:1 1 200px;min-width:0}
+.members{display:flex;gap:6px;flex-wrap:wrap}
+.member{font-size:12px;border-radius:99px;padding:2px 9px;background:var(--accent-soft);color:var(--accent);font-weight:600}
 .place-field{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0;position:relative}
 .place-list{position:absolute;left:0;right:0;top:100%;margin-top:4px;z-index:30;list-style:none;padding:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.16);max-height:320px;overflow-y:auto}
 .place-list li{display:flex;flex-direction:column;gap:1px;padding:8px 10px;border-radius:8px;cursor:pointer;border:none}
@@ -245,6 +265,13 @@ ul.items{min-height:6px}
 .ranking ol b{color:var(--ink);font-weight:600}
 .camper{font-size:12px;color:var(--muted)}
 .camper b{color:#C98A1E}
+.rbtns{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.redit-box{border:1.5px solid var(--accent)!important;padding:14px!important}
+.rform{display:flex;flex-direction:column;gap:12px}
+.rgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rgrid label{display:flex;flex-direction:column;gap:4px;font-size:12px;color:var(--muted);min-width:0}
+.rgrid .wide{grid-column:1/-1}
+.rgrid textarea{resize:vertical;font-size:14px}
 footer{font-size:12px;color:var(--muted);text-align:center}
 
 @media (max-width:720px){
@@ -263,12 +290,15 @@ footer{font-size:12px;color:var(--muted);text-align:center}
 <body>
 <div class="wrap">
   <header>
-    <div>
-      <div class="eyebrow">Auto Camping · 차박</div>
-      <h1>캠핑 준비물 체크리스트</h1>
+    <div class="brand">
+      <img class="logo" src="logo.png" width="400" height="400" alt="캠첵! Camp-Check 로고">
+      <div class="brand-text">
+        <div class="eyebrow">Camp-Check · 캠첵!</div>
+        <h1>가족 캠핑 체크리스트</h1>
+      </div>
     </div>
     <div class="meter">
-      <button class="qr-btn" id="qrBtn" aria-haspopup="dialog"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 3h5v5H3zM12 3h5v5h-5zM3 12h5v5H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 12h2v2h-2zM15 15h2v2h-2zM15 12h2v2h-2zM12 15h2v2h-2z" fill="currentColor"/></svg>가족 공유 QR</button>
+      <button class="qr-btn" id="qrBtn" aria-haspopup="dialog"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M3 3h5v5H3zM12 3h5v5h-5zM3 12h5v5H3z" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 12h2v2h-2zM15 15h2v2h-2zM15 12h2v2h-2zM12 15h2v2h-2z" fill="currentColor"/></svg>가족 초대 QR</button>
       <div class="num" id="totalNum">0<small> / 0</small></div>
       <div class="cap" id="totalCap">챙긴 짐</div>
     </div>
@@ -282,6 +312,31 @@ footer{font-size:12px;color:var(--muted);text-align:center}
       <label>예상 최저기온<input class="field" id="tripTemp" type="text" placeholder="예: 3℃"></label>
     </div>
   </header>
+
+  <div class="acct" id="acct"><span class="dot" id="acctDot"></span><span id="acctText">불러오는 중…</span><span class="grow"></span><span id="acctBtns"></span></div>
+
+  <section class="fam" id="imp" hidden aria-labelledby="impTitle">
+    <div class="lp-head"><h3 id="impTitle">시트판 자료 가져오기</h3><button class="link" id="impClose">닫기</button></div>
+    <p id="impText">구글 시트에 쌓아 둔 캠핑 기록과 준비물 목록을 이 가족 공간으로 옮겨요. 시트에 있는 자료는 지워지지 않아요.</p>
+    <div id="impConn">
+      <div class="row"><input class="field" id="impApi" type="url" placeholder="시트판 웹 앱 주소(/exec)" aria-label="시트판 웹 앱 주소"><input class="field" id="impKey" type="password" placeholder="비밀 코드" aria-label="시트판 비밀 코드"></div>
+    </div>
+    <div class="row"><button class="primary" id="impLoad">시트판 자료 불러오기</button></div>
+    <div id="impPick" hidden>
+      <label class="confirm"><input type="checkbox" id="impRec" checked> <span id="impRecText">캠핑 기록</span></label>
+      <label class="confirm"><input type="checkbox" id="impSet"> 준비물 목록·상황 설정도 시트판 것으로 바꾸기 <span class="camper">(지금 가족판 목록은 덮어써져요)</span></label>
+      <div class="row"><button class="primary" id="impGo">가족 공간으로 옮기기</button></div>
+    </div>
+    <div class="msg" id="impMsg" aria-live="polite"></div>
+  </section>
+
+  <section class="fam" id="fam" hidden aria-labelledby="famTitle">
+    <h3 id="famTitle">가족 공간 만들기</h3>
+    <p id="famText">가족 공간을 만들면 이 목록이 거기로 올라가고, 가족을 QR로 초대해 함께 체크할 수 있어요.</p>
+    <div class="row" id="famCreateRow"><input class="field" id="famName" type="text" value="우리 가족 캠핑" aria-label="가족 공간 이름"><button class="primary" id="famCreate">만들기</button></div>
+    <p id="famHint">가족에게 초대받았다면, 가족이 보여 주는 QR을 찍거나 보내 준 링크를 열어 주세요.</p>
+    <div class="msg" id="famMsg" aria-live="polite"></div>
+  </section>
 
   <div class="install" id="install" hidden>
     <p id="installText">휴대폰에 앱으로 설치하면 아이콘을 눌러 바로 열 수 있어요.</p>
@@ -325,29 +380,14 @@ footer{font-size:12px;color:var(--muted);text-align:center}
     <ol class="records" id="records"></ol>
   </section>
 
-  <section class="conn" id="conn" hidden aria-labelledby="connTitle">
-    <h3 id="connTitle">구글 시트 연결</h3>
-    <p>시트의 웹 앱 주소(/exec)를 한 번 열면 이 화면으로 넘어오면서 자동으로 연결돼요. 직접 넣으려면 아래에 주소와 비밀 코드를 넣으세요.</p>
-    <label>웹 앱 주소 또는 연결 링크<input class="field" id="connApi" type="url" placeholder="https://script.google.com/macros/s/…/exec"></label>
-    <label>비밀 코드<input class="field" id="connKey" type="password" autocomplete="off"></label>
-    <div class="row"><button class="primary" id="connSave">연결하기</button><button class="link warn" id="connOff">연결 끊기</button></div>
-    <div class="msg" id="connMsg" aria-live="polite"></div>
-    <div class="share" id="shareBox" hidden>
-      <p>함께 쓸 사람의 휴대폰에 보낼 링크예요. 한 번 열면 그 기기에 연결이 저장되고, 다음부터는 짧은 주소로 열면 돼요. 비밀 코드가 들어 있으니 가족에게만 보내세요.</p>
-      <div class="row"><input class="field" id="shareLink" readonly aria-label="연결 링크"><button class="chip" id="copyShare">링크 복사</button></div>
-    </div>
-  </section>
-
-  <div class="conn-foot"><button class="link" id="connBtn" hidden>연결 주소 변경</button></div>
-
   <footer id="foot">Made by 음악적체육인</footer>
 
   <div class="qr-modal" id="qrModal" hidden>
     <div class="qr-card" role="dialog" aria-modal="true" aria-labelledby="qrTitle">
-      <h3 id="qrTitle">가족 공유 QR</h3>
+      <h3 id="qrTitle">가족 초대 QR</h3>
       <p id="qrText">휴대폰 카메라로 찍으면 같은 시트에 연결된 체크리스트가 열려요.</p>
       <div class="qr-box" id="qrBox"></div>
-      <p class="warn" id="qrWarn">비밀 코드가 들어 있어요. 가족에게만 보여 주세요.</p>
+      <p class="warn" id="qrWarn">이 QR로 들어온 사람은 가족 공간을 함께 쓰게 돼요. 가족에게만 보여 주세요.</p>
       <div class="row"><button class="chip" id="qrCopy">링크 복사</button><button class="chip" id="qrClose">닫기</button></div>
       <p id="qrMsg" aria-live="polite"></p>
     </div>
@@ -410,65 +450,50 @@ function normalize(){
 const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
-/* ---------- 저장소: 구글 시트 껍데기(웹 앱) 또는 이 기기 ---------- */
-const KEY = "camping-checklist-v2", RKEY = "camping-records-v1", CKEY = "camping-conn-v1";
+/* ---------- 저장소: 파이어베이스(가족 공간) 또는 이 기기 ----------
+   파이어베이스 쪽 일은 아래 type="module" 스크립트가 맡고, window.REMOTE 로 연결됨 */
+const KEY = "campfb-checklist-v1", RKEY = "campfb-records-v1", SHEET_KEY = "camping-checklist-v2";
 function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
 function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-let conn = {};
-try{ conn = JSON.parse(lsGet(CKEY) || "{}") || {}; }catch(e){}
-(function fromLink(){
+/* 예전 시트판 웹 앱 주소(/exec)로 들어오면 그 연결을 기억해 두었다가 '시트판 자료 가져오기'에 채워 줌 */
+let pendingImport = false;
+(function fromSheetLink(){
   try{
     const q = new URLSearchParams(location.search);
     if (q.get("api")){
-      conn = {api:q.get("api"), key:q.get("key") || ""};
-      lsSet(CKEY, JSON.stringify(conn));
-      history.replaceState(null, "", location.pathname);
+      lsSet("camping-conn-v1", JSON.stringify({api:q.get("api"), key:q.get("key") || ""}));
+      q.delete("api"); q.delete("key"); pendingImport = true;
+      history.replaceState(null, "", location.pathname + (q.toString() ? "?" + q : ""));
     }
   }catch(e){}
 })();
-let SHEET = !!conn.api;
-
-async function req(action, data){
-  const ACCESS_HINT = "Apps Script [배포] > [배포 관리] > 연필 버튼에서 '액세스 권한이 있는 사용자'를 '모든 사용자'로 바꾸고 다시 배포해 주세요.";
-  let r;
-  try{
-    r = await fetch(conn.api, {method:"POST", body:JSON.stringify(Object.assign({action, key:conn.key}, data || {}))});
-  }catch(e){
-    throw new Error("시트에 닿지 못했어요. 인터넷이 연결돼 있다면 " + ACCESS_HINT);
-  }
-  const text = await r.text();
-  let j;
-  try{ j = JSON.parse(text); }
-  catch(e){ throw new Error("시트가 자료 대신 로그인 화면을 보냈어요. " + ACCESS_HINT); }
-  if (!j.ok) throw new Error(j.error || "시트가 대답하지 않았어요.");
-  return j;
-}
+let REMOTE = null;            // 가족 공간에 들어가 있으면 {saveSettings, check, clearChecks, addRecord, deleteRecord}
+let FAMILY = null;            // {id, name, members:[{uid,name}], invite}
 const sortRecs = l => l.sort((a,b) => (b.date+b.saved).localeCompare(a.date+a.saved));
 const local = {
-  getData(){ let r=[]; try{ r = JSON.parse(lsGet(RKEY)||"[]"); }catch(e){} return {settings:lsGet(KEY)||"", records:sortRecs(r)}; },
+  getData(){ let r=[]; try{ r = JSON.parse(lsGet(RKEY)||"[]"); }catch(e){} return {settings:lsGet(KEY)||lsGet(SHEET_KEY)||"", records:sortRecs(r)}; },
   saveRecord(rec){
     const l = local.getData().records;
-    const d = new Date(), p = n => String(n).padStart(2,"0");
-    l.push(Object.assign({}, rec, {id:uid(), saved:`${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`}));
+    l.push(Object.assign({}, rec, {id:uid(), saved:nowText()}));
     lsSet(RKEY, JSON.stringify(l)); return sortRecs(l);
   },
   deleteRecord(id){ const l = local.getData().records.filter(r => r.id !== id); lsSet(RKEY, JSON.stringify(l)); return l; },
-  updateRecord(a){ const l = local.getData().records.map(r => r.id === a.id ? Object.assign({}, r, {rating:a.rating}) : r); lsSet(RKEY, JSON.stringify(l)); return sortRecs(l); }
+  updateRecord(a){ const f = a.fields || {rating:a.rating}; const l = local.getData().records.map(r => r.id === a.id ? Object.assign({}, r, f) : r); lsSet(RKEY, JSON.stringify(l)); return sortRecs(l); }
 };
+function nowText(){ const d = new Date(), p = n => String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`; }
 async function call(fn, arg){
-  if (!SHEET) return local[fn](arg);
-  if (fn === "getData"){ const j = await req("get"); return {settings:j.settings, records:j.records}; }
-  if (fn === "saveRecord") return (await req("saveRecord", {rec:arg})).records;
-  if (fn === "deleteRecord") return (await req("deleteRecord", {id:arg})).records;
-  if (fn === "updateRecord") return (await req("updateRecord", arg)).records;
+  if (!REMOTE) return local[fn](arg);
+  if (fn === "getData") return {settings:"", records};
+  if (fn === "saveRecord"){ await REMOTE.addRecord(Object.assign({}, arg, {saved:nowText()})); return records; }
+  if (fn === "deleteRecord"){ await REMOTE.deleteRecord(arg); return records.filter(r => r.id !== arg); }
+  if (fn === "updateRecord"){ const f = arg.fields || {rating:arg.rating}; await REMOTE.updateRecord(arg.id, f); return records.map(r => r.id === arg.id ? Object.assign({}, r, f) : r); }
 }
 let pending = 0;
-function track(p, okText){
-  pending++; setSync("시트에 저장 중…");
-  return p.then(() => { pending--; if (!pending) setSync(okText || "구글 시트와 연결됨 · 저장 완료", "ok"); })
-    .catch(err => { pending--; setSync("시트에 저장하지 못했어요. " + (err && err.message || "인터넷 연결을 확인해 주세요."), "err"); });
+function track(p){
+  pending++;
+  return Promise.resolve(p).then(() => { pending--; showConnState(); })
+    .catch(err => { pending--; setSync("저장하지 못했어요. " + (err && err.message || "잠시 뒤 다시 해 보세요."), "err"); });
 }
-
 /* ---------- 상태 ---------- */
 let state = {zones:defaultZones(), labels:DEFAULT_LABELS.map(l => Object.assign({}, l)), checked:{}, trip:{}, memo:"", f:{hide:false}};
 let records = [];
@@ -481,30 +506,27 @@ function applySettings(json){
   }catch(e){}
   normalize();
 }
-applySettings(lsGet(KEY));
+applySettings(local.getData().settings);
 
-function settingsJson(withChecked){
-  const s = Object.assign({}, state);
-  if (!withChecked) delete s.checked;
-  return JSON.stringify(s);
+function settingsObj(){   // 가족 공간에 올리는 목록·여행 정보 (체크는 한 칸씩 따로)
+  return JSON.parse(JSON.stringify({zones:state.zones, labels:state.labels, trip:state.trip, memo:state.memo, f:state.f}));
 }
 let saveTimer = null;
 function save(){
   lsSet(KEY, JSON.stringify(state));
-  if (!SHEET) return;
+  if (!REMOTE) return;
   clearTimeout(saveTimer);
-  setSync("시트에 저장 중…");
-  saveTimer = setTimeout(() => { saveTimer = null; track(req("saveSettings", {settings:settingsJson(false)})); }, 900);
+  saveTimer = setTimeout(() => { saveTimer = null; incoming = null; track(REMOTE.saveSettings(settingsObj())); }, 700);   // 내 저장이 나가면 기다리던 옛 내용은 버림(곧 새 내용이 옴)
 }
 /* 체크는 한 칸씩 보내서, 두 사람이 동시에 체크해도 서로 지우지 않게 */
 function setCheck(id, on){
   lsSet(KEY, JSON.stringify(state));
-  if (SHEET) track(req("check", {id, on}));
+  if (REMOTE) track(REMOTE.check(id, on));
 }
 function clearChecks(){
   state.checked = {};
   lsSet(KEY, JSON.stringify(state));
-  if (SHEET) track(req("clearChecks"));
+  if (REMOTE) track(REMOTE.clearChecks());
 }
 function setSync(text, cls){ const el = document.getElementById("sync"); el.textContent = text; el.className = "sync" + (cls ? " "+cls : ""); }
 
@@ -1035,7 +1057,7 @@ function renderRecords(){
     ol.innerHTML = `<li class="no-rec">아직 기록이 없어요. 캠핑을 다녀오면 왼쪽 버튼으로 날짜별로 남겨 두세요.</li>`;
     return;
   }
-  ol.innerHTML = records.map(r => `<li><details>
+  ol.innerHTML = records.map(r => editRec === r.id ? recordForm(r) : `<li><details>
     <summary><span class="rdate">${esc((r.date||"날짜 없음").replace(/-/g,"."))}</span>
       <span class="rplace">${esc(r.place || "캠핑장 미입력")}</span>
       <span class="rmeta">${Number(r.rating)?`<span class="rstar">★${Number(r.rating)}</span> · `:""}${r.nights?esc(r.nights)+"박 · ":""}${r.temp?esc(r.temp)+" · ":""}챙김 ${r.got}/${r.total}</span></summary>
@@ -1045,9 +1067,47 @@ function renderRecords(){
       ${r.placeId ? `<p class="camper" data-cpid="${esc(r.placeId)}">${camperText(r.placeId)}</p>` : ""}
       ${r.memo?`<p><b>메모</b> ${esc(r.memo)}</p>`:""}
       ${r.missed && r.missed.length ? `<p><b>안 챙긴 항목</b> ${esc(r.missed.join(", "))}</p>` : "<p>목록을 모두 챙겼어요.</p>"}
-      <span id="rd-${esc(r.id)}"><button class="link warn rdel" data-id="${esc(r.id)}">이 기록 삭제</button></span>
+      <div class="rbtns"><button class="link redit" data-id="${esc(r.id)}">기록 고치기</button>
+        <span id="rd-${esc(r.id)}"><button class="link warn rdel" data-id="${esc(r.id)}">이 기록 삭제</button></span></div>
     </div></details></li>`).join("");
 }
+/* 기록 고치기 */
+let editRec = null;
+function recordForm(r){
+  const id = esc(r.id);
+  return `<li class="redit-box"><form class="rform" data-id="${id}">
+    <div class="rgrid">
+      <label>출발일<input class="field" name="date" type="date" value="${esc(r.date||"")}"></label>
+      <label>몇 박<input class="field" name="nights" type="number" min="0" max="30" inputmode="numeric" value="${esc(r.nights||"")}"></label>
+      <label class="wide">캠핑장<input class="field" name="place" type="text" value="${esc(r.place||"")}"></label>
+      <label>최저기온<input class="field" name="temp" type="text" value="${esc(r.temp||"")}" placeholder="예: 3℃"></label>
+      <label class="wide">메모<textarea class="field" name="memo" rows="2">${esc(r.memo||"")}</textarea></label>
+      <label class="wide">안 챙긴 항목 <span class="camper">(쉼표로 나눠 적기)</span><textarea class="field" name="missed" rows="2">${esc((r.missed||[]).join(", "))}</textarea></label>
+    </div>
+    <div class="rbtns"><button type="submit" class="primary">저장</button><button type="button" class="link rcancel">취소</button></div>
+  </form></li>`;
+}
+document.getElementById("records").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.classList.contains("redit")){ editRec = b.dataset.id; renderRecords(); const f = document.querySelector(".rform input[name=place]"); if (f) f.focus(); }
+  else if (b.classList.contains("rcancel")){ const id = editRec; editRec = null; renderRecords(); reopen([id]); }
+});
+document.getElementById("records").addEventListener("submit", e => {
+  e.preventDefault();
+  const f = e.target, id = f.dataset.id, r = records.find(x => x.id === id); if (!r) return;
+  const v = n => f.elements[n].value.trim();
+  const missed = v("missed") ? v("missed").split(/\s*,\s*/).filter(Boolean) : [];
+  const fields = {date:v("date"), nights:v("nights"), place:v("place"), temp:v("temp"), memo:v("memo"), missed};
+  if (Array.isArray(r.missed) && r.total){ fields.got = Math.max(0, r.total - missed.length); }
+  const oldPid = r.placeId;
+  if (fields.place !== (r.place||"")){ fields.placeId = ""; fields.addr = ""; fields.placeUrl = ""; }   // 이름을 바꾸면 카카오 장소 연결은 풀림
+  const btn = f.querySelector("button[type=submit]"); btn.disabled = true;
+  call("updateRecord", {id, fields}).then(l => {
+    editRec = null; if (l) records = sortRecs(l); renderRecords(); reopen([id]);
+    if (oldPid && fields.placeId === "") publishRating(oldPid);
+    toast("기록을 고쳤어요.");
+  }).catch(() => { btn.disabled = false; setSync("기록을 고치지 못했어요. 잠시 뒤 다시 해 보세요.", "err"); });
+});
 document.getElementById("records").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   const id = b.dataset.id;
@@ -1080,7 +1140,7 @@ document.getElementById("saveRec").addEventListener("click", () => {
     if (rec.placeId) setTimeout(() => publishRating(rec.placeId), 1500);
     records = l; renderRecords();
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
-    msg.innerHTML = `${esc(rec.date.replace(/-/g,"."))} 기록을 ${SHEET?"시트에 ":""}남겼어요. 다음 캠핑 준비로 비울까요?
+    msg.innerHTML = `${esc(rec.date.replace(/-/g,"."))} 기록을 ${REMOTE?"가족 공간에 ":""}남겼어요. 다음 캠핑 준비로 비울까요?
       <span class="confirm"><button class="yes" id="clearYes">체크·메모 비우기</button><button id="clearNo">그대로 두기</button></span>`;
   }).catch(() => {
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
@@ -1100,94 +1160,164 @@ function isTyping(){
   const a = document.activeElement;
   return dragging || !!quick || (a && (a.tagName === "TEXTAREA" || (a.tagName === "INPUT" && a.type !== "checkbox")));
 }
-function load(first){
-  return call("getData").then(d => {
-    if (SHEET){
-      if (d.settings){ applySettings(d.settings); lsSet(KEY, JSON.stringify(state)); }
-      else if (first){ track(req("saveSettings", {settings:settingsJson(true), withChecked:true}), "구글 시트와 연결됨 · 이 기기의 목록을 시트에 올렸어요"); }
-      if (first || !isTyping()){ fillTrip(); render(); }
-    }
-    records = d.records || []; renderRecords();
-    if (SHEET && !pending) setSync("구글 시트와 연결됨 · " + hhmm() + " 기준", "ok");
-    if (!SHEET) setSync("시트에 연결하지 않아 이 기기에만 저장돼요.");
-  });
+/* 가족 공간에서 바뀐 내용이 오면 반영. 글을 쓰거나 고치는 중이면 끝난 뒤에 반영 */
+let incoming = null;
+function applyFamily(d){
+  if (!d) return;
+  if (isTyping() || saveTimer){ incoming = d; return; }
+  incoming = null;
+  const next = Object.assign({}, state);
+  ["zones","labels","trip","memo","f"].forEach(k => { if (d[k] !== undefined) next[k] = d[k]; });
+  next.checked = d.checked || {};
+  state = next; normalize();
+  lsSet(KEY, JSON.stringify(state));
+  fillTrip(); render();
 }
-function refresh(){
-  if (SHEET && document.visibilityState === "visible" && !pending && !saveTimer && !isTyping()) load(false).catch(() => {});
-}
-setInterval(refresh, 20000);
-document.addEventListener("visibilitychange", refresh);
+setInterval(() => { if (incoming && !isTyping() && !saveTimer) applyFamily(incoming); }, 1200);
+document.addEventListener("focusout", () => setTimeout(() => { if (incoming && !isTyping() && !saveTimer) applyFamily(incoming); }, 50));
 
-/* ---------- 시트 연결 설정 ---------- */
-const connEl = document.getElementById("conn"), connMsg = document.getElementById("connMsg");
-function shareLink(){
-  return location.origin + location.pathname + "?api=" + encodeURIComponent(conn.api) + "&key=" + encodeURIComponent(conn.key || "");
+function applyRecords(list){ records = sortRecs(list); if (editRec) return; renderRecords(); }   // 고치는 중이면 다 고친 뒤에 다시 그림
+
+/* ---------- 계정 · 가족 공간 표시 ---------- */
+const acctText = document.getElementById("acctText"), acctBtns = document.getElementById("acctBtns"), acctDot = document.getElementById("acctDot");
+const famEl = document.getElementById("fam"), famMsg = document.getElementById("famMsg");
+const G_ICON = '<svg viewBox="0 0 18 18" width="16" height="16" aria-hidden="true"><path fill="#4285F4" d="M17.6 9.2c0-.6-.1-1.2-.2-1.7H9v3.3h4.8a4.1 4.1 0 0 1-1.8 2.7v2.2h2.9c1.7-1.6 2.7-3.9 2.7-6.5z"/><path fill="#34A853" d="M9 18c2.4 0 4.5-.8 5.9-2.2L12 13.6c-.8.5-1.8.9-3 .9-2.3 0-4.3-1.6-5-3.7H1v2.3A9 9 0 0 0 9 18z"/><path fill="#FBBC05" d="M4 10.8a5.4 5.4 0 0 1 0-3.5V5H1a9 9 0 0 0 0 8z"/><path fill="#EA4335" d="M9 3.6c1.3 0 2.5.5 3.4 1.3L15 2.4A9 9 0 0 0 1 5l3 2.3c.7-2.1 2.7-3.7 5-3.7z"/></svg>';
+let ACCOUNT = {phase:"loading"};   // loading | noconfig | out | nofamily | in
+function showConnState(){
+  if (!REMOTE) return;
+  if (!navigator.onLine) setSync("인터넷이 끊겼어요. 체크한 것은 이 기기에 두었다가 연결되면 가족 공간에 올라가요.", "err");
+  else if (pending) setSync("가족 공간에 저장 중…");
+  else setSync("가족 공간과 실시간으로 연결됨", "ok");
 }
-function updateConnUI(){
-  document.getElementById("connApi").value = conn.api || "";
-  document.getElementById("connKey").value = conn.key || "";
-  document.getElementById("shareBox").hidden = !SHEET;
-  if (SHEET) document.getElementById("shareLink").value = shareLink();
-  const cb = document.getElementById("connBtn");
-  cb.hidden = !SHEET;
-  cb.textContent = connEl.hidden ? "연결 주소 변경" : "연결 창 닫기";
-}
-/* 연결돼 있으면 연결 창은 숨기고, 아래 작은 글씨로만 열 수 있게. 연결 전에는 늘 보이게 */
-function showConn(open){
-  connEl.hidden = SHEET ? !open : false;
-  updateConnUI();
-}
-document.getElementById("connBtn").addEventListener("click", () => {
-  showConn(connEl.hidden);
-  if (!connEl.hidden){ connMsg.textContent = ""; connEl.scrollIntoView({behavior:"smooth", block:"start"}); }
-});
-document.getElementById("connSave").addEventListener("click", () => {
-  let api = document.getElementById("connApi").value.trim(), key = document.getElementById("connKey").value;
-  connMsg.className = "msg";
-  try{
-    const u = new URL(api);
-    if (u.searchParams.get("api")){ key = u.searchParams.get("key") || key; api = u.searchParams.get("api"); }
-  }catch(e){}
-  if (/script\.googleusercontent\.com/.test(api)){
-    connMsg.className = "msg err";
-    connMsg.textContent = "이 주소는 웹 앱을 브라우저로 열었을 때 바뀐 임시 주소예요. Apps Script의 [배포] > [배포 관리]에서 /exec 로 끝나는 웹 앱 주소를 복사해 넣어 주세요."; return;
+window.addEventListener("online", showConnState);
+window.addEventListener("offline", showConnState);
+function renderAccount(){
+  const a = ACCOUNT;
+  famEl.hidden = a.phase !== "nofamily";
+  acctDot.className = "dot" + (a.phase === "in" ? (navigator.onLine ? " on" : " off") : "");
+  if (a.phase === "loading"){ acctText.textContent = "불러오는 중…"; acctBtns.innerHTML = ""; }
+  else if (a.phase === "noconfig"){
+    acctText.textContent = "파이어베이스 설정값이 아직 없어 이 기기에만 저장돼요.";
+    acctBtns.innerHTML = "";
+  } else if (a.phase === "out"){
+    acctText.innerHTML = a.joining ? "<b>가족 초대 링크로 들어왔어요.</b> 구글로 로그인하면 가족 공간에 들어가요." : "지금은 이 기기에만 저장돼요. 로그인하면 가족과 함께 써요.";
+    acctBtns.innerHTML = `<button class="gbtn" id="loginBtn">${G_ICON}구글로 로그인</button>`;
+  } else if (a.phase === "nofamily"){
+    acctText.innerHTML = `<b>${esc(a.user.name)}</b> 님으로 로그인했어요.`;
+    acctBtns.innerHTML = '<button class="link" id="logoutBtn">로그아웃</button>';
+  } else if (a.phase === "in"){
+    const ms = (FAMILY.members || []).map(m => `<span class="member">${esc(m.name)}${m.uid === a.user.uid ? " (나)" : ""}</span>`).join("");
+    acctText.innerHTML = `<span class="who"><b>${esc(FAMILY.name)}</b><span class="members">${ms}</span></span>`;
+    acctBtns.innerHTML = '<button class="link" id="importBtn">시트판 자료 가져오기</button> · <button class="link" id="logoutBtn">로그아웃</button>';
   }
-  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(api)){
-    connMsg.className = "msg err"; connMsg.textContent = "웹 앱 주소는 https://script.google.com/ 으로 시작하고 /exec 로 끝나야 해요."; return;
-  }
-  const before = conn, btn = document.getElementById("connSave");
-  conn = {api, key}; btn.disabled = true; connMsg.textContent = "연결해 보는 중…";
-  req("get").then(() => {
-    lsSet(CKEY, JSON.stringify(conn)); SHEET = true;
-    connMsg.className = "msg"; connMsg.textContent = "";
-    showConn(false); return load(true);
-  }).catch(err => {
-    conn = before;
-    connMsg.className = "msg err"; connMsg.textContent = "연결하지 못했어요. " + (err && err.message || "주소와 배포 설정(액세스: 모든 사용자)을 확인해 주세요.");
-  }).finally(() => { btn.disabled = false; });
+  if (a.phase !== "in" && a.phase !== "noconfig") setSync(a.phase === "loading" ? "불러오는 중…" : "로그인하지 않아 이 기기에만 저장돼요.");
+  if (a.phase === "noconfig") setSync("이 기기에만 저장돼요.");
+}
+acctBtns.addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "importBtn"){ openImport(); return; }
+  if (!window.FBAPP) return;
+  if (b.id === "loginBtn"){ b.disabled = true; window.FBAPP.login().catch(err => { b.disabled = false; acctText.textContent = "로그인하지 못했어요. " + (err && err.message || ""); }); }
+  if (b.id === "logoutBtn") window.FBAPP.logout();
 });
-document.getElementById("connOff").addEventListener("click", () => {
-  conn = {}; SHEET = false; lsSet(CKEY, "{}");
-  connMsg.className = "msg"; connMsg.textContent = "연결을 끊었어요. 이제 이 기기에만 저장돼요.";
-  showConn(true); setSync("시트에 연결하지 않아 이 기기에만 저장돼요.");
+document.getElementById("famCreate").addEventListener("click", () => {
+  const name = document.getElementById("famName").value.trim() || "우리 가족 캠핑", btn = document.getElementById("famCreate");
+  btn.disabled = true; famMsg.className = "msg"; famMsg.textContent = "만드는 중…";
+  window.FBAPP.createFamily(name, Object.assign(settingsObj(), {checked:state.checked}), local.getData().records)
+    .then(() => { famMsg.textContent = ""; toast("가족 공간을 만들었어요. 위의 가족 초대 QR로 가족을 불러 주세요."); })
+    .catch(err => { famMsg.className = "msg err"; famMsg.textContent = "만들지 못했어요. " + (err && err.message || ""); })
+    .finally(() => { btn.disabled = false; });
 });
-document.getElementById("copyShare").addEventListener("click", () => {
-  const inp = document.getElementById("shareLink");
-  const fallback = () => { inp.select(); connMsg.className = "msg"; connMsg.textContent = "링크를 선택해 두었어요. 길게 눌러 복사하세요."; };
+
+/* 파이어베이스 스크립트가 부르는 연결점 */
+/* ---------- 시트판 자료 가져오기 ---------- */
+const impEl = document.getElementById("imp"), impMsg = document.getElementById("impMsg");
+let impData = null;
+function sheetConn(){ try{ return JSON.parse(lsGet("camping-conn-v1") || "{}") || {}; }catch(e){ return {}; } }
+function openImport(){
+  const c = sheetConn();
+  document.getElementById("impApi").value = c.api || "";
+  document.getElementById("impKey").value = c.key || "";
+  document.getElementById("impText").textContent = c.api
+    ? "이 기기에 시트판 연결이 남아 있어서 주소와 비밀 코드를 채워 두었어요. [불러오기]를 누르세요. 시트에 있는 자료는 지워지지 않아요."
+    : "시트판 웹 앱 주소(/exec)와 비밀 코드를 넣고 [불러오기]를 누르세요. 시트에 있는 자료는 지워지지 않아요.";
+  document.getElementById("impPick").hidden = true; impMsg.textContent = ""; impData = null;
+  impEl.hidden = false; impEl.scrollIntoView({behavior:"smooth", block:"start"});
+}
+document.getElementById("impClose").addEventListener("click", () => { impEl.hidden = true; });
+document.getElementById("impLoad").addEventListener("click", async () => {
+  let api = document.getElementById("impApi").value.trim(), key = document.getElementById("impKey").value;
+  try{ const u = new URL(api); if (u.searchParams.get("api")){ key = u.searchParams.get("key") || key; api = u.searchParams.get("api"); } }catch(e){}
+  impMsg.className = "msg";
+  if (!/^https:\/\/script\.google\.com\/.+\/exec$/.test(api)){ impMsg.className = "msg err"; impMsg.textContent = "웹 앱 주소는 https://script.google.com/ 으로 시작하고 /exec 로 끝나야 해요."; return; }
+  const btn = document.getElementById("impLoad"); btn.disabled = true; impMsg.textContent = "시트에서 불러오는 중…";
   try{
-    navigator.clipboard.writeText(inp.value).then(() => { connMsg.className = "msg"; connMsg.textContent = "링크를 복사했어요. 카톡으로 보내 주세요."; }, fallback);
-  }catch(e){ fallback(); }
+    const r = await fetch(api, {method:"POST", body:JSON.stringify({action:"get", key})});
+    let j; try{ j = JSON.parse(await r.text()); }catch(e){ throw new Error("시트가 자료 대신 로그인 화면을 보냈어요. 배포 액세스가 '모든 사용자'인지 확인해 주세요."); }
+    if (!j.ok) throw new Error(j.error || "시트가 대답하지 않았어요.");
+    let settings = null; try{ settings = j.settings ? JSON.parse(j.settings) : null; }catch(e){}
+    impData = {records: j.records || [], settings};
+    const done = new Set(records.map(x => x.srcId).filter(Boolean));
+    const fresh = impData.records.filter(x => !done.has(x.id));
+    impData.fresh = fresh;
+    document.getElementById("impRecText").textContent = `캠핑 기록 ${fresh.length}개` + (impData.records.length !== fresh.length ? ` (이미 옮긴 ${impData.records.length - fresh.length}개는 건너뜀)` : "");
+    document.getElementById("impRec").checked = fresh.length > 0; document.getElementById("impRec").disabled = !fresh.length;
+    document.getElementById("impSet").disabled = !(settings && settings.zones);
+    document.getElementById("impPick").hidden = false;
+    impMsg.textContent = `시트에서 기록 ${impData.records.length}개${settings && settings.zones ? "와 준비물 목록" : ""}을 찾았어요. 옮길 것을 고르세요.`;
+  }catch(err){ impMsg.className = "msg err"; impMsg.textContent = "불러오지 못했어요. " + (err && err.message || ""); }
+  finally{ btn.disabled = false; }
 });
+document.getElementById("impGo").addEventListener("click", async () => {
+  if (!impData || !REMOTE) return;
+  const doRec = document.getElementById("impRec").checked, doSet = document.getElementById("impSet").checked;
+  if (!doRec && !doSet){ impMsg.className = "msg err"; impMsg.textContent = "옮길 것을 하나 이상 골라 주세요."; return; }
+  const btn = document.getElementById("impGo"); btn.disabled = true; impMsg.className = "msg";
+  try{
+    if (doSet && impData.settings && impData.settings.zones){
+      const s0 = impData.settings;
+      const next = Object.assign({}, state, {zones:s0.zones, trip:s0.trip || {}, memo:s0.memo || "", f:s0.f || state.f, checked:s0.checked || {}});
+      if (Array.isArray(s0.labels)) next.labels = s0.labels; else delete next.labels;
+      const keepF = s0.f; state = next; state.f = keepF || {hide:false}; normalize();
+      await REMOTE.saveSettings(Object.assign(settingsObj(), {checked:state.checked}));
+      fillTrip(); render();
+    }
+    let n = 0;
+    if (doRec){
+      for (const r of impData.fresh){
+        const copy = Object.assign({}, r, {srcId:r.id}); delete copy.id;
+        await REMOTE.addRecord(copy); n++;
+        impMsg.textContent = `기록 옮기는 중… ${n} / ${impData.fresh.length}`;
+      }
+    }
+    impMsg.textContent = `옮겼어요.${doRec ? ` 캠핑 기록 ${n}개` : ""}${doSet ? (doRec ? ", " : " ") + "준비물 목록" : ""}이 가족 공간에 들어갔어요.`;
+    document.getElementById("impPick").hidden = true; impData = null;
+    setTimeout(() => records.forEach(r => { if (r.placeId) publishRating(r.placeId); }), 2500);
+  }catch(err){ impMsg.className = "msg err"; impMsg.textContent = "옮기는 중에 멈췄어요. 다시 누르면 이미 옮긴 기록은 건너뛰어요. " + (err && err.message || ""); }
+  finally{ btn.disabled = false; }
+});
+
+window.CAMP = {
+  setAccount(info){ ACCOUNT = info; renderAccount(); },
+  enterFamily(fam, remote){
+    FAMILY = fam; REMOTE = remote; ACCOUNT = Object.assign({}, ACCOUNT, {phase:"in"}); renderAccount(); showConnState();
+    if (pendingImport){ pendingImport = false; setTimeout(openImport, 400); }
+  },
+  updateFamilyInfo(fam){ FAMILY = Object.assign({}, FAMILY, fam); renderAccount(); },
+  leaveFamily(){ FAMILY = null; REMOTE = null; records = local.getData().records; renderRecords(); },
+  applyFamily, applyRecords, showConnState
+};
 
 /* ---------- 가족 공유 QR ---------- */
 const qrModal = document.getElementById("qrModal"), qrMsg = document.getElementById("qrMsg");
 let qrUrl = "", qrReturn = null;
 function openQr(){
-  qrUrl = SHEET ? shareLink() : location.origin + location.pathname;
-  document.getElementById("qrText").textContent = SHEET
-    ? "휴대폰 카메라로 찍으면 같은 시트에 연결된 체크리스트가 열려요. 한 번 열면 그 휴대폰에 연결이 저장돼요."
-    : "아직 시트에 연결하지 않아 화면만 열려요. 시트에 연결하면 이 QR로 함께 쓸 수 있어요.";
-  document.getElementById("qrWarn").hidden = !SHEET;
+  const inv = FAMILY && FAMILY.invite;
+  qrUrl = location.origin + location.pathname + (inv ? "?join=" + encodeURIComponent(FAMILY.id + "." + inv) : "");
+  document.getElementById("qrText").textContent = inv
+    ? "가족이 휴대폰 카메라로 찍고 구글로 로그인하면 '" + FAMILY.name + "' 공간에 함께 들어와요."
+    : "아직 가족 공간이 없어 화면만 열려요. 로그인하고 가족 공간을 만들면 이 QR이 초대장이 돼요.";
+  document.getElementById("qrWarn").hidden = !inv;
   const box = document.getElementById("qrBox");
   try{
     const q = qrcode(0, "M"); q.addData(qrUrl); q.make();
@@ -1217,7 +1347,7 @@ const IOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform
 const installBox = document.getElementById("install"), installText = document.getElementById("installText"), installGo = document.getElementById("installGo");
 let installEvt = null;
 /* 한 번 설치했거나 앱으로 연 기기는 브라우저에서도 설치 안내를 다시 띄우지 않음 */
-const IKEY = "camping-installed";
+const IKEY = "campfb-installed";
 if (STANDALONE) lsSet(IKEY, "1");
 const installLater = () => {
   if (STANDALONE || lsGet(IKEY)) return "1";
@@ -1249,19 +1379,10 @@ if (navigator.getInstalledRelatedApps){
   navigator.getInstalledRelatedApps().then(list => { if (list && list.length){ lsSet(IKEY, "1"); installBox.hidden = true; } }).catch(() => {});
 }
 
-/* 아이폰 홈 화면 앱은 사파리와 저장 공간이 따로라, 처음 열면 연결 링크를 붙여 넣게 안내 */
-if (STANDALONE && !SHEET){
-  connEl.hidden = false;
-  document.querySelector("#conn > p").textContent = "앱에서 처음 열었어요. 시트 연결 설정에 있는 [링크 복사]로 받은 연결 링크를 아래 칸에 붙여 넣고 [연결하기]를 누르세요. 비밀 코드 칸은 비워 둬도 돼요.";
-}
-
 /* ---------- 시작 ---------- */
-fillTrip(); render(); showConn(false);
-setSync(SHEET ? "구글 시트에서 불러오는 중…" : "시트에 연결하지 않아 이 기기에만 저장돼요.");
-load(true).catch(err => {
-  renderRecords();
-  setSync("시트에서 불러오지 못했어요. 지금 화면은 이 기기에 남은 내용이에요. (" + (err && err.message || "연결 오류") + ")", "err");
-});
+fillTrip(); render(); renderAccount();
+records = local.getData().records; renderRecords();
 </script>
+<script type="module" src="app-firebase.js"></script>
 </body>
 </html>

@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "캠핑 준비물 체크리스트",
-  "short_name": "캠핑 체크",
-  "description": "캠핑 준비물 체크와 날짜별 캠핑 기록",
+  "name": "캠첵! Cam-Check",
+  "short_name": "캠첵!",
+  "description": "가족이 함께 쓰는 캠핑 준비물 체크와 캠핑 기록",
   "lang": "ko",
   "start_url": "./",
   "scope": "./",
