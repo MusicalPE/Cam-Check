@@ -395,6 +395,14 @@ a.chip{text-decoration:none;display:inline-block}
 .zone.folded .cnt .chev{transform:rotate(-90deg)}
 .zone.folded ul.items,.zone.folded .empty,.zone.folded .qadd{display:none}
 .zone.folded{gap:10px;padding-bottom:16px}
+
+/* 꼭 챙길 것 */
+li.imp{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-left:4px solid var(--accent);border-radius:6px 10px 10px 6px}
+li.imp .txt{font-weight:800;color:var(--ink)}
+.must{display:inline-block;flex:none;font-size:11.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:99px;padding:2px 8px;white-space:nowrap}
+li.imp.on{background:transparent;border-left-color:transparent}
+li.imp.on .txt{font-weight:normal;color:var(--done)}
+li.imp.on .must{opacity:.4}
 </style>
 </head>
 <body>
@@ -677,6 +685,7 @@ function itemRow(z, i){
     return `<li class="qrow"><form class="qedit" data-z="${z.id}" data-i="${i.id}">
       <input class="qinput" id="q-${i.id}" value="${esc(quick.t ?? i.t)}" aria-label="항목 이름 고치기">
       <button type="submit" class="qsave">저장</button>
+      <div class="qlabels"><span>강조</span><button type="button" class="ctog qimp" aria-pressed="${!!quick.imp}">꼭 챙기기</button></div>
       <div class="qlabels"><span>상황</span>${labelToggles(z, i)}</div>
       <div class="qlabels qplace"><span>구역 옮기기</span>
         <select class="qzsel" data-z="${z.id}" data-i="${i.id}" aria-label="다른 구역으로 옮기기">${state.zones.map(x => `<option value="${x.id}" ${x.id===z.id?"selected":""}>${x.id===z.id?"구역: ":"→ "}${esc(x.name)}</option>`).join("")}</select></div>
@@ -686,9 +695,9 @@ function itemRow(z, i){
     return `<li class="askdel"><span class="txt">${esc(i.t)}</span><span class="confirm">목록에서 뺄까요?
       <button class="yes tyes" data-z="${z.id}" data-i="${i.id}">빼기</button><button class="tno">취소</button></span></li>`;
   }
-  return `<li class="${state.checked[i.id]?"on":""}" data-i="${i.id}">
+  return `<li class="${state.checked[i.id]?"on":""}${i.imp?" imp":""}" data-i="${i.id}">
     <span class="grip" aria-hidden="true" title="눌러서 끌면 순서가 바뀌어요"><svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg></span>
-    <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span></label>
+    <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span>${i.imp?'<span class="must">꼭!</span>':""}</label>
     ${badges(i.g, "tag")}
     <button class="pen" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 고치기" title="고치기">${PENCIL}</button>
     <button class="pen trash" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 빼기" title="빼기">${TRASH}</button></li>`;
@@ -722,7 +731,7 @@ function zoneView(z){
 }
 function openQuick(type, id){
   const target = type === "item" ? state.zones.flatMap(z => z.items).find(i => i.id === id) : findZone(id);
-  quick = {type, id, g:((target && target.g) || []).slice()}; render();   // 상황은 저장을 눌러야 반영
+  quick = {type, id, g:((target && target.g) || []).slice(), imp:!!(target && target.imp)}; render();   // 상황은 저장을 눌러야 반영
   const el = document.getElementById((type === "item" ? "q-" : "qz-") + id);
   if (el){ el.focus(); el.select(); }
 }
@@ -873,6 +882,10 @@ grid.addEventListener("click", e => {
     if (state.checked[t.dataset.i]){ delete state.checked[t.dataset.i]; setCheck(t.dataset.i, false); }
     quick = null; save(); render(); return;
   }
+  if (t.classList.contains("qimp") && quick){
+    const qi = document.querySelector(".qinput"); if (qi) quick.t = qi.value;   // 쓰던 글자 지키기
+    quick.imp = !quick.imp; render(); return;
+  }
   if (t.id === "zoneNew"){
     const z = {id:uid(), name:"새 구역", sub:"", g:[], items:[]};
     state.zones.push(z); save(); openQuick("zone", z.id);
@@ -910,6 +923,7 @@ grid.addEventListener("submit", e => {
     const it = findZone(f.dataset.z).items.find(i => i.id === f.dataset.i), v = f.querySelector("input").value.trim();
     if (it && v) it.t = v;
     if (it && quick && quick.g) it.g = quick.g.slice();
+    if (it && quick){ if (quick.imp) it.imp = true; else delete it.imp; }
     quick = null; save(); render();
     const el = document.getElementById("c-"+f.dataset.i);
     if (el) el.focus(); else if (it) toast(`"${it.t}"은(는) 지금 꺼진 상황이라 숨겨졌어요. 위에서 그 상황을 켜면 보여요.`);
