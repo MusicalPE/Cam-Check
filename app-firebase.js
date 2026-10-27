@@ -208,7 +208,10 @@ async function start(){
     const remote = {
       saveSettings: obj => F.updateDoc(fref, Object.assign({}, obj, { updatedBy: me.uid, updatedAt: F.serverTimestamp() })).catch(e => { throw friendly(e); }),
       check: (itemId, on) => F.updateDoc(fref, new F.FieldPath("checked", itemId), on ? true : F.deleteField()).catch(e => { throw friendly(e); }),
-      clearChecks: () => F.updateDoc(fref, { checked: {} }).catch(e => { throw friendly(e); }),
+      clearChecks: () => F.updateDoc(fref, { checked: {}, back: {} }).catch(e => { throw friendly(e); }),
+      clearGo: () => F.updateDoc(fref, { checked: {} }).catch(e => { throw friendly(e); }),
+      clearBack: () => F.updateDoc(fref, { back: {} }).catch(e => { throw friendly(e); }),
+      checkBack: (itemId, on) => F.updateDoc(fref, new F.FieldPath("back", itemId), on ? true : F.deleteField()).catch(e => { throw friendly(e); }),
       addRecord: rec => F.addDoc(col, Object.assign({}, rec, { by: me.uid, createdAt: F.serverTimestamp() })).catch(e => { throw friendly(e); }),
       deleteRecord: rid => F.deleteDoc(F.doc(col, rid)).catch(e => { throw friendly(e); }),
       updateRecord: (rid, fields) => F.updateDoc(F.doc(col, rid), fields).catch(e => { throw friendly(e); })

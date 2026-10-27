@@ -447,6 +447,24 @@ a.chip{text-decoration:none;display:inline-block}
 .share-list li:hover,.news-item li:hover{background:none;border-color:transparent}
 .tabbar .news-dot{position:absolute;top:2px;right:18%;margin:0;padding:0;width:9px;height:9px;font-size:0;border:2px solid var(--surface)}
 
+
+/* 출발 / 철수 체크 */
+.phase{display:flex;gap:4px;background:var(--surface);border:1.5px solid var(--line);border-radius:99px;padding:4px;align-self:center;width:max-content;max-width:100%}
+.phase button{border:none;background:transparent;font:inherit;font-size:14px;font-weight:700;color:var(--muted);border-radius:99px;padding:8px 18px;cursor:pointer}
+.phase button[aria-pressed="true"]{background:var(--forest);color:var(--on-forest)}
+body.phase-back .phase button[aria-pressed="true"]{background:var(--accent)}
+.phase-hint{margin:-12px 0 0;text-align:center;font-size:13px;font-weight:700;color:var(--accent)}
+body.phase-back input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+body.phase-back .meter .num{color:var(--accent)}
+/* 되돌리기 */
+.toast.undo{display:flex;align-items:center;gap:14px;text-align:left;width:min(92vw,420px);justify-content:space-between}
+.toast.undo span{flex:1;min-width:0;word-break:keep-all}
+.toast.undo button{flex:none;border:1.5px solid var(--on-forest);background:transparent;color:var(--on-forest);font:inherit;font-weight:800;border-radius:99px;padding:6px 14px;cursor:pointer}
+
+/* 끌어서 옮길 때 글자가 파랗게 칠해지지 않게 */
+.grip{user-select:none;-webkit-user-select:none}
+body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:none!important}
+
 /* 항목 이름도 낱말 단위로만 줄바꿈 */
 li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
 
@@ -501,6 +519,8 @@ li.imp.on .must{opacity:.4}
     <div class="btns"><button class="go" id="installGo">앱으로 설치</button><button id="installLater">나중에</button></div>
   </div>
 
+  <div class="phase tabbed v-home" id="phase" role="group" aria-label="체크 단계"><button data-ph="go" aria-pressed="true">출발 체크</button><button data-ph="back" aria-pressed="false">철수 체크</button></div>
+  <p class="phase-hint tabbed v-home" id="phaseHint" hidden>출발 때 챙긴 것만 보여요. 다시 실을 때마다 체크하세요.</p>
   <div class="bar tabbed v-home" id="totalBar"><i></i></div>
 
   <div class="tools tabbed v-home">
@@ -692,13 +712,13 @@ function track(p){
     .catch(err => { pending--; setSync("저장하지 못했어요. " + (err && err.message || "잠시 뒤 다시 해 보세요."), "err"); });
 }
 /* ---------- 상태 ---------- */
-let state = {zones:defaultZones(), labels:DEFAULT_LABELS.map(l => Object.assign({}, l)), checked:{}, trip:{}, memo:"", f:{hide:false}};
+let state = {zones:defaultZones(), labels:DEFAULT_LABELS.map(l => Object.assign({}, l)), checked:{}, back:{}, trip:{}, memo:"", f:{hide:false}};
 let records = [];
 function applySettings(json){
   if (!json) return;
   try{
     const s = JSON.parse(json);
-    if (s && Array.isArray(s.zones)){ state = Object.assign(state, s); state.checked = s.checked || {}; if (!Array.isArray(s.labels)) delete state.labels; }
+    if (s && Array.isArray(s.zones)){ state = Object.assign(state, s); state.checked = s.checked || {}; state.back = s.back || {}; if (!Array.isArray(s.labels)) delete state.labels; }
     else if (s && s.checked) state.checked = s.checked;
   }catch(e){}
   normalize();
@@ -715,15 +735,24 @@ function save(){
   clearTimeout(saveTimer);
   saveTimer = setTimeout(() => { saveTimer = null; incoming = null; track(REMOTE.saveSettings(settingsObj())); }, 700);   // 내 저장이 나가면 기다리던 옛 내용은 버림(곧 새 내용이 옴)
 }
+/* 출발 체크 / 철수 체크: 같은 목록을 두 번 체크. 어느 쪽을 보는지는 이 기기에서만 기억 */
+let PHASE = lsGet("camcheck-phase") === "back" ? "back" : "go";
+const inBack = () => PHASE === "back";
+const CK = () => inBack() ? (state.back || (state.back = {})) : state.checked;
 /* 체크는 한 칸씩 보내서, 두 사람이 동시에 체크해도 서로 지우지 않게 */
-function setCheck(id, on){
+function setCheck(id, on, back){
   lsSet(KEY, JSON.stringify(state));
-  if (REMOTE) track(REMOTE.check(id, on));
+  if (REMOTE) track((back === undefined ? inBack() : back) && REMOTE.checkBack ? REMOTE.checkBack(id, on) : REMOTE.check(id, on));
 }
-function clearChecks(){
-  state.checked = {};
+function clearChecks(){   // 출발·철수 체크 체크 모두
+  state.checked = {}; state.back = {};
   lsSet(KEY, JSON.stringify(state));
   if (REMOTE) track(REMOTE.clearChecks());
+}
+function clearPhase(){   // 지금 보고 있는 쪽 체크만
+  if (!inBack()) { state.checked = {}; lsSet(KEY, JSON.stringify(state)); if (REMOTE) track(REMOTE.clearGo ? REMOTE.clearGo() : REMOTE.clearChecks()); return; }
+  state.back = {}; lsSet(KEY, JSON.stringify(state));
+  if (REMOTE && REMOTE.clearBack) track(REMOTE.clearBack());
 }
 function setSync(text, cls){ const el = document.getElementById("sync"); el.textContent = text; el.className = "sync" + (cls ? " "+cls : ""); }
 
@@ -732,6 +761,10 @@ const findLabel = id => state.labels.find(l => l.id === id);
 const labelOn = id => { const l = findLabel(id); return !l || l.on !== false; };
 const visible = g => !g || !g.length || g.some(labelOn);   // 붙은 상황 중 하나라도 켜져 있으면 보임
 const editingNow = (type, id) => quick && quick.type === type && quick.id === id;
+function viewItems(z){
+  const it = shownItems(z); if (!it || !inBack()) return it;
+  return Object.keys(state.checked).length ? it.filter(i => state.checked[i.id]) : it;
+}
 function shownItems(z){
   if (!visible(z.g) && !editingNow("zone", z.id) && !z.items.some(i => editingNow("item", i.id))) return null;
   return z.items.filter(it => visible(it.g) || editingNow("item", it.id));   // 고치는 중인 것은 저장 전까지 그대로 보임
@@ -743,7 +776,7 @@ const labelToggles = (z, i) => state.labels.map(l => {
 }).join("");
 function countAll(){
   let tot = 0, got = 0;
-  state.zones.forEach(z => { const it = shownItems(z); if (!it) return; tot += it.length; got += it.filter(i => state.checked[i.id]).length; });
+  state.zones.forEach(z => { const it = viewItems(z); if (!it) return; tot += it.length; got += it.filter(i => CK()[i.id]).length; });
   return {tot, got};
 }
 
@@ -767,9 +800,9 @@ function itemRow(z, i){
     return `<li class="askdel"><span class="txt">${esc(i.t)}</span><span class="confirm">목록에서 뺄까요?
       <button class="yes tyes" data-z="${z.id}" data-i="${i.id}">빼기</button><button class="tno">취소</button></span></li>`;
   }
-  return `<li class="${state.checked[i.id]?"on":""}${i.imp?" imp":""}" data-i="${i.id}">
+  return `<li class="${CK()[i.id]?"on":""}${i.imp?" imp":""}" data-i="${i.id}">
     <span class="grip" aria-hidden="true" title="눌러서 끌면 순서가 바뀌어요"><svg viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><g fill="currentColor"><circle cx="7" cy="5" r="1.5"/><circle cx="13" cy="5" r="1.5"/><circle cx="7" cy="10" r="1.5"/><circle cx="13" cy="10" r="1.5"/><circle cx="7" cy="15" r="1.5"/><circle cx="13" cy="15" r="1.5"/></g></svg></span>
-    <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${state.checked[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span>${i.imp?'<span class="must">꼭!</span>':""}</label>
+    <label><input type="checkbox" id="c-${i.id}" data-i="${i.id}" ${CK()[i.id]?"checked":""}><span class="txt">${esc(i.t)}</span>${i.imp?'<span class="must">꼭!</span>':""}</label>
     ${badges(i.g, "tag")}
     <button class="pen" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 고치기" title="고치기">${PENCIL}</button>
     <button class="pen trash" data-z="${z.id}" data-i="${i.id}" aria-label="${esc(i.t)} 빼기" title="빼기">${TRASH}</button></li>`;
@@ -779,9 +812,9 @@ function itemRow(z, i){
 const fold = new Set((() => { try{ return JSON.parse(lsGet("camcheck-fold") || "[]"); }catch(e){ return []; } })());
 function toggleFold(id){ fold.has(id) ? fold.delete(id) : fold.add(id); lsSet("camcheck-fold", JSON.stringify([...fold])); render(); const b = document.querySelector(`.zone[data-z="${id}"] .zfold`); if (b) b.focus({preventScroll:true}); }
 function zoneView(z){
-  const items = shownItems(z);
-  if (!items) return "";
-  const n = items.length, k = items.filter(i => state.checked[i.id]).length;
+  const items = viewItems(z);
+  if (!items || (inBack() && !items.length && !(quick && quick.id === z.id))) return "";
+  const n = items.length, k = items.filter(i => CK()[i.id]).length;
   const full = n && k === n;
   const head = quick && quick.type === "zone" && quick.id === z.id
     ? `<form class="qzone" data-z="${z.id}">
@@ -818,7 +851,10 @@ function render(){
 
   const {tot, got} = countAll();
   document.getElementById("totalNum").innerHTML = `${got}<small> / ${tot}</small>`;
-  document.getElementById("totalCap").textContent = tot && got === tot ? "출발 준비 끝" : `챙긴 짐 · 남은 ${tot-got}개`;
+  document.getElementById("totalCap").textContent = tot && got === tot ? (inBack() ? "철수 준비 끝" : "출발 준비 끝") : `${inBack() ? "다시 실은 짐" : "챙긴 짐"} · 남은 ${tot-got}개`;
+  document.body.classList.toggle("phase-back", inBack());
+  document.querySelectorAll("#phase button").forEach(b => b.setAttribute("aria-pressed", b.dataset.ph === PHASE));
+  document.getElementById("phaseHint").hidden = !inBack();
   const tb = document.getElementById("totalBar");
   tb.querySelector("i").style.width = (tot ? got/tot*100 : 0) + "%";
   tb.classList.toggle("full", tot > 0 && got === tot);
@@ -879,11 +915,11 @@ function setupDrag(){
   document.body.classList.add("can-drag");
   const grid = document.getElementById("grid");
   const opts = {animation:150, ghostClass:"drag-ghost", chosenClass:"drag-chosen", forceFallback:true, fallbackTolerance:3,
-    onStart(){ dragging = true; }, };
+    onStart(){ dragging = true; document.body.classList.add("dragging"); try{ getSelection().removeAllRanges(); }catch(e){} }, };
   grid.querySelectorAll("ul.items").forEach(ul => Sortable.create(ul, Object.assign({}, opts, {
     group:"items", handle:".grip", draggable:"li[data-i]",
     onEnd(ev){
-      dragging = false;
+      dragging = false; document.body.classList.remove("dragging");
       const from = findZone(ev.from.dataset.z), to = findZone(ev.to.dataset.z), id = ev.item.dataset.i;
       const it = from.items.find(i => i.id === id);
       if (from === to){
@@ -900,7 +936,7 @@ function setupDrag(){
   gridSort = Sortable.create(grid, Object.assign({}, opts, {
     handle:".zgrip", draggable:"section.zone",
     onEnd(ev){
-      dragging = false;
+      dragging = false; document.body.classList.remove("dragging");
       if (ev.oldIndex !== ev.newIndex){ state.zones = reorder(state.zones, z => z.id, idsIn(grid, "section.zone", "z")); save(); }
       render();
     }
@@ -920,7 +956,7 @@ grid.addEventListener("change", e => {
     return;
   }
   if (t.type === "checkbox" && t.dataset.i){
-    if (t.checked) state.checked[t.dataset.i] = 1; else delete state.checked[t.dataset.i];
+    if (t.checked) CK()[t.dataset.i] = 1; else delete CK()[t.dataset.i];
     setCheck(t.dataset.i, t.checked); render();
     const el = document.getElementById("c-"+t.dataset.i); if (el) el.focus();
   }
@@ -940,10 +976,10 @@ grid.addEventListener("click", e => {
   if (t.classList.contains("trash")){ askDel = t.dataset.i; quick = null; render(); const y = document.querySelector(".tno"); if (y) y.focus(); return; }
   if (t.classList.contains("tno")){ const id = askDel; askDel = null; render(); const b = document.querySelector(`.trash[data-i="${id}"]`); if (b) b.focus(); return; }
   if (t.classList.contains("tyes")){
-    const qz = findZone(t.dataset.z);
+    const qz = findZone(t.dataset.z), before = snapState(), nm = (qz.items.find(i => i.id === t.dataset.i) || {}).t || "항목";
     qz.items = qz.items.filter(i => i.id !== t.dataset.i);
-    if (state.checked[t.dataset.i]){ delete state.checked[t.dataset.i]; setCheck(t.dataset.i, false); }
-    askDel = null; save(); render(); return;
+    if (state.checked[t.dataset.i]){ delete state.checked[t.dataset.i]; setCheck(t.dataset.i, false, false); }
+    askDel = null; save(); render(); offerUndo(`"${nm}"을(를) 뺐어요.`, before); return;
   }
   if (t.classList.contains("pen")){ askDel = null; e.preventDefault(); openQuick(t.dataset.i ? "item" : "zone", t.dataset.i || t.dataset.z); return; }
   if (t.classList.contains("qcancel")){ closeQuick(); return; }
@@ -979,8 +1015,10 @@ grid.addEventListener("click", e => {
     document.getElementById("zd-"+z.id).innerHTML =
       `<span class="confirm">항목 ${z.items.length}개도 함께 지워져요. <button class="yes zdel-yes" data-z="${z.id}">삭제</button><button class="zdel-no" data-z="${z.id}">취소</button></span>`;
   } else if (t.classList.contains("zdel-yes")){
+    const before = snapState();
     z.items.forEach(i => delete state.checked[i.id]);
     state.zones = state.zones.filter(x => x !== z); quick = null; save(); render();
+    offerUndo(`"${z.name}" 구역을 지웠어요.`, before);
   } else if (t.classList.contains("zdel-no")){
     document.getElementById("zd-"+z.id).innerHTML = `<button type="button" class="link warn zdel" data-z="${z.id}">구역 삭제</button>`;
   }
@@ -1084,9 +1122,9 @@ function twoStep(boxId, label, question, yesLabel, onYes){
   });
   return idle;
 }
-const resetIdle = twoStep("resetBox", "체크 모두 지우기", "체크를 모두 지울까요?", "지우기", () => { clearChecks(); render(); });
+const resetIdle = twoStep("resetBox", "체크 모두 지우기", "체크를 모두 지울까요?", "지우기", () => { const before = snapState(); clearPhase(); render(); offerUndo("체크를 모두 지웠어요.", before); });
 twoStep("defaultBox", "처음 목록으로 되돌리기", "내가 고친 구역과 항목이 모두 처음 목록으로 바뀌어요.", "되돌리기",
-  () => { state.zones = defaultZones(); state.labels = DEFAULT_LABELS.map(l => Object.assign({}, l)); save(); clearChecks(); render(); });
+  () => { const before = snapState(); state.zones = defaultZones(); state.labels = DEFAULT_LABELS.map(l => Object.assign({}, l)); save(); clearChecks(); render(); offerUndo("처음 목록으로 바꿨어요.", before); });
 
 /* 여행 정보 */
 const TRIP = {tripStart:"start", tripNights:"nights", tripPlace:"place", tripTemp:"temp"};
@@ -1397,7 +1435,7 @@ function applyFamily(d){
   incoming = null;
   const next = Object.assign({}, state);
   ["zones","labels","trip","memo","f"].forEach(k => { if (d[k] !== undefined) next[k] = d[k]; });
-  next.checked = d.checked || {};
+  next.checked = d.checked || {}; next.back = d.back || {};
   state = next; normalize();
   lsSet(KEY, JSON.stringify(state));
   fillTrip(); render();
@@ -1598,7 +1636,7 @@ function renderFamTab(){
   }
 }
 twoStep("defaultBox2", "되돌리기", "정말 처음 목록으로 바꿀까요?", "바꾸기",
-  () => { state.zones = defaultZones(); state.labels = DEFAULT_LABELS.map(l => Object.assign({}, l)); save(); clearChecks(); render(); toast("처음 목록으로 바꿨어요."); });
+  () => { const before = snapState(); state.zones = defaultZones(); state.labels = DEFAULT_LABELS.map(l => Object.assign({}, l)); save(); clearChecks(); render(); offerUndo("처음 목록으로 바꿨어요.", before); });
 document.getElementById("installSet").addEventListener("click", () => showInstall(true));
 
 /* ---------- 계정·자료 관리 ---------- */
@@ -1661,6 +1699,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"1.6.0", d:"2026. 10. 28.", items:["철수 체크: 출발 때 챙긴 물건만 모아서, 다시 실을 때 한 번 더 체크해요.","되돌리기: 항목 빼기, 체크 모두 지우기, 목록 바꾸기를 한 뒤 몇 초 안에 [되돌리기]를 누르면 원래대로 돌아와요."]},
   {v:"1.5.0", d:"2026. 10. 27.", items:["준비물 세팅 공유: 우리 목록을 짧은 주소와 QR로 보내고, 받은 목록을 더하거나 통째로 바꿀 수 있어요.","업데이트 소식을 설정에서 볼 수 있어요.","자매 앱 트립첵!(여행 준비물)으로 바로 가는 버튼이 생겼어요."]},
   {v:"1.4", d:"2026. 10. 27.", items:["꼭 챙길 물건 강조: 연필 → [꼭 챙기기]를 켜면 굵은 글씨와 꼭! 표시가 붙어요.","구역 이름을 누르면 구역이 접히고 펴져요.","화면 디자인을 새로 다듬었어요(흰 카드, 더 큰 체크칸)."]},
   {v:"1.3", d:"2026. 10.", items:["개인정보처리방침, 계정·자료 관리(기록 내려받기, 가족에서 나가기, 계정 지우기).","휴대폰 아래 탭을 기록 · 체크 · 설정·가족 세 칸으로 정리.","별점을 반 개 단위로."]}
@@ -1826,13 +1865,14 @@ function showReceived(){
     return;
   }
   document.getElementById("shareMerge").addEventListener("click", () => {
-    const r = applyShared(data, "merge"); doneShare(); closeShare(); setTab("home");
+    const before = snapState(); const r = applyShared(data, "merge"); doneShare(); closeShare(); setTab("home");
+    if (r.addedItems){ offerUndo(`항목 ${r.addedItems}개를 더했어요.${r.addedZones ? ` (새 구역 ${r.addedZones}개)` : ""}`, before); return; }
     toast(r.addedItems ? `항목 ${r.addedItems}개를 더했어요.${r.addedZones ? ` (새 구역 ${r.addedZones}개)` : ""}` : "새로 더할 항목이 없었어요. 이미 다 있어요.");
   });
   let sure = false;
   document.getElementById("shareReplace").addEventListener("click", e => {
     if (!sure){ sure = true; e.target.textContent = "정말 바꿀까요? 한 번 더 누르기"; return; }
-    applyShared(data, "replace"); doneShare(); closeShare(); setTab("home"); toast("받은 세팅으로 바꿨어요.");
+    const before = snapState(); applyShared(data, "replace"); doneShare(); closeShare(); setTab("home"); offerUndo("받은 세팅으로 바꿨어요.", before);
   });
 }
 function closeShare(){ shareEl.hidden = true; }
@@ -1868,6 +1908,32 @@ newsEl.addEventListener("click", e => { if (e.target === newsEl) newsEl.hidden =
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !newsEl.hidden) newsEl.hidden = true; });
 document.getElementById("newsVer").textContent = "지금 " + NEWS[0].v;
 markNews();
+
+/* ---------- 되돌리기: 빼기·지우기·바꾸기 뒤 몇 초 동안 ---------- */
+const snapState = () => JSON.parse(JSON.stringify({zones:state.zones, labels:state.labels, checked:state.checked, back:state.back || {}}));
+let undoTimer = null;
+function offerUndo(text, before){
+  let el = document.getElementById("undoBar");
+  if (!el){ el = document.createElement("div"); el.id = "undoBar"; el.className = "toast undo"; el.setAttribute("role", "status"); document.body.appendChild(el); }
+  const t = document.getElementById("toast"); if (t) t.hidden = true;
+  el.innerHTML = `<span>${esc(text)}</span><button type="button">되돌리기</button>`; el.hidden = false;
+  el.querySelector("button").onclick = () => { restoreState(before); el.hidden = true; clearTimeout(undoTimer); toast("되돌렸어요."); };
+  clearTimeout(undoTimer); undoTimer = setTimeout(() => { el.hidden = true; }, 7000);
+}
+function restoreState(b){
+  const syncMap = (now, was, back) => {
+    Object.keys(was).forEach(id => { if (!now[id]) setCheck(id, true, back); });
+    Object.keys(now).forEach(id => { if (!was[id]) setCheck(id, false, back); });
+  };
+  const nowC = state.checked, nowB = state.back || {};
+  state.zones = b.zones; state.labels = b.labels; state.checked = b.checked; state.back = b.back;
+  syncMap(nowC, b.checked, false); syncMap(nowB, b.back, true);
+  save(); render();
+}
+document.getElementById("phase").addEventListener("click", e => {
+  const b = e.target.closest("button[data-ph]"); if (!b || b.dataset.ph === PHASE) return;
+  PHASE = b.dataset.ph; lsSet("camcheck-phase", PHASE); render();
+});
 </script>
 <script type="module" src="app-firebase.js"></script>
 </body>
