@@ -396,6 +396,13 @@ a.chip{text-decoration:none;display:inline-block}
 .zone.folded ul.items,.zone.folded .empty,.zone.folded .qadd{display:none}
 .zone.folded{gap:10px;padding-bottom:16px}
 
+
+/* 구역 이름은 낱말 단위로만 줄바꿈, 꼬리표는 다음 줄로 */
+.zone h2{flex-wrap:wrap;row-gap:4px;word-break:keep-all;overflow-wrap:break-word}
+.zone h2 .zfold{word-break:keep-all;overflow-wrap:break-word;min-width:0}
+.zone-head .zh-text{flex:1 1 auto}
+.zone-head .cnt{flex:none}
+
 /* 꼭 챙길 것 */
 li.imp{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-left:4px solid var(--accent);border-radius:6px 10px 10px 6px}
 li.imp .txt{font-weight:800;color:var(--ink)}
