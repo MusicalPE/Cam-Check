@@ -403,11 +403,14 @@ a.chip{text-decoration:none;display:inline-block}
 .zone-head .zh-text{flex:1 1 auto}
 .zone-head .cnt{flex:none}
 
+/* 항목 이름도 낱말 단위로만 줄바꿈 */
+li .txt,.rplace,.place-list .pn{word-break:keep-all;overflow-wrap:break-word}
+
 /* 꼭 챙길 것 */
-li.imp{background:color-mix(in srgb,var(--accent) 8%,var(--surface));border-left:4px solid var(--accent);border-radius:6px 10px 10px 6px}
+li.imp{background:color-mix(in srgb,var(--accent) 8%,var(--surface));box-shadow:inset 4px 0 0 var(--accent)}
 li.imp .txt{font-weight:800;color:var(--ink)}
 .must{display:inline-block;flex:none;font-size:11.5px;font-weight:800;color:#fff;background:var(--accent);border-radius:99px;padding:2px 8px;white-space:nowrap}
-li.imp.on{background:transparent;border-left-color:transparent}
+li.imp.on{background:transparent;box-shadow:none}
 li.imp.on .txt{font-weight:normal;color:var(--done)}
 li.imp.on .must{opacity:.4}
 </style>
