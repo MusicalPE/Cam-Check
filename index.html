@@ -484,6 +484,10 @@ body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:non
 .mlist{gap:6px}
 .mlist li.meal{align-items:flex-start;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .mlist li.meal:hover{background:var(--bg)}
+.mlist li.meal.editing{border-color:var(--accent);box-shadow:0 0 0 2px color-mix(in srgb,var(--accent) 25%,transparent)}
+.mlist li.meal .pen{align-self:center}
+.madd .ghost-btn{grid-column:1/-1;padding:9px;border:1.5px solid var(--line);background:var(--surface);color:var(--muted);font:inherit;font-weight:700;border-radius:12px;cursor:pointer}
+.madd.editing .primary{background:var(--accent);border-color:var(--accent)}
 .mslot{flex:none;font-size:12px;font-weight:800;color:var(--on-forest);background:var(--accent);border-radius:99px;padding:3px 9px;margin-top:2px}
 .mtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;word-break:keep-all}
 .mtxt b{font-size:15px;color:var(--ink)}
@@ -494,7 +498,7 @@ body.dragging,body.dragging *{user-select:none!important;-webkit-user-select:non
 .madd .primary{grid-column:1/-1;padding:10px}
 .madd .field{font-size:14px;padding:9px 12px}
 .mtag{background:color-mix(in srgb,var(--forest) 12%,var(--surface));color:var(--forest);border-color:color-mix(in srgb,var(--forest) 30%,transparent)}
-@media (min-width:900px){.madd{grid-template-columns:auto 1fr 1.4fr auto}.madd #mealIng,.madd .primary{grid-column:auto}}
+@media (min-width:900px){.madd{grid-template-columns:auto 1fr 1.4fr auto}.madd #mealIng,.madd .primary{grid-column:auto}.madd.editing{grid-template-columns:auto 1fr 1.4fr auto auto}.madd .ghost-btn{grid-column:auto}}
 
 /* 예상 기온: 최저 · 최고 */
 .temp-field{display:flex;flex-direction:column;gap:6px;font-size:13px;font-weight:700;color:var(--muted);min-width:0}
@@ -2069,6 +2073,30 @@ function addMeal(day, slot, menu, ingText){
   save(); render();
   return added;
 }
+/* 식단 고치기: 빠진 재료는 먹거리에서 빼고(다른 끼니에서 쓰면 남김), 새 재료는 넣음 */
+let mealEdit = null;
+function editMeal(id, slot, menu, ingText){
+  const m = state.meals.find(x => x.id === id); if (!m) return 0;
+  const ing = ingText.split(/[,，、\n]/).map(t => t.trim()).filter(Boolean);
+  const gone = m.ing.filter(t => !ing.some(n => norm(n) === norm(t)));
+  m.slot = slot; m.menu = menu; m.ing = ing;
+  state.zones.forEach(z => {
+    z.items = z.items.filter(i => {
+      if (i.m !== id || !gone.some(t => norm(t) === norm(i.t))) return true;
+      const other = state.meals.find(o => o.id !== id && o.ing.some(t => norm(t) === norm(i.t)));
+      if (other){ i.m = other.id; return true; }
+      if (state.checked[i.id]){ delete state.checked[i.id]; setCheck(i.id, false, false); }
+      return false;
+    });
+  });
+  const fz = foodZone(); let added = 0;
+  ing.forEach(t => {
+    if (state.zones.some(z => z.items.some(i => norm(i.t) === norm(t)))) return;
+    fz.items.push({id:uid(), t, g:[], m:id}); added++;
+  });
+  save(); render();
+  return {added, removed:gone.length};
+}
 function delMeal(id){
   const before = snapState();
   const m = state.meals.find(x => x.id === id); if (!m) return;
@@ -2094,32 +2122,47 @@ function renderMeals(){
   const folded = fold.has("meals");
   const cnt = meals.length;
   const list = meals.filter(m => m.day === mealDay).sort((a, b) => SLOTS.indexOf(a.slot) - SLOTS.indexOf(b.slot));
+  const ed = mealEdit && meals.find(m => m.id === mealEdit && m.day === mealDay); if (!ed) mealEdit = null;
   el.className = "zone meals tabbed v-meal" + (folded ? " folded" : "");
   el.innerHTML = `<div class="zone-head"><div class="zh-text"><h2><button type="button" class="zfold mfold" aria-expanded="${!folded}">식단</button></h2><div class="sub">메뉴와 재료를 적으면 재료가 먹거리 구역에 들어가요</div></div>
     <button type="button" class="cnt zfold mfold" aria-expanded="${!folded}">${cnt}끼<svg class="chev" viewBox="0 0 20 20" width="14" height="14" aria-hidden="true"><path d="M5 8l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div>
     <div class="mbody">
     <div class="mdays" role="tablist">${Array.from({length:days}, (_, i) => i + 1).map(d => `<button type="button" class="mday" data-d="${d}" aria-pressed="${d === mealDay}">${d}일차<small>${meals.filter(m => m.day === d).length || ""}</small></button>`).join("")}</div>
     <div class="mdate">${esc(dayLabel(mealDay))}</div>
-    <ul class="mlist">${list.length ? list.map(m => `<li class="meal"><span class="mslot">${esc(m.slot)}</span><div class="mtxt"><b>${esc(m.menu)}</b>${m.ing.length ? `<span>${m.ing.map(esc).join(" · ")}</span>` : ""}</div><button type="button" class="pen trash mdel" data-m="${m.id}" aria-label="${esc(m.menu)} 빼기" title="빼기">${TRASH}</button></li>`).join("")
+    <ul class="mlist">${list.length ? list.map(m => `<li class="meal${m.id === mealEdit ? " editing" : ""}"><span class="mslot">${esc(m.slot)}</span><div class="mtxt"><b>${esc(m.menu)}</b>${m.ing.length ? `<span>${m.ing.map(esc).join(" · ")}</span>` : ""}</div><button type="button" class="pen medit" data-m="${m.id}" aria-label="${esc(m.menu)} 고치기" title="고치기">${PENCIL}</button><button type="button" class="pen trash mdel" data-m="${m.id}" aria-label="${esc(m.menu)} 빼기" title="빼기">${TRASH}</button></li>`).join("")
       : `<li class="mempty">아직 이 날 식단이 없어요.</li>`}</ul>
-    <form class="madd" id="mealAdd">
-      <select class="qzsel" id="mealSlot" aria-label="끼니">${SLOTS.map(t => `<option ${t === "저녁" ? "selected" : ""}>${t}</option>`).join("")}</select>
-      <input class="field" id="mealMenu" placeholder="메뉴 (예: 삼겹살 구이)" aria-label="메뉴">
-      <input class="field" id="mealIng" placeholder="재료를 쉼표로 (예: 삼겹살, 쌈채소, 쌈장)" aria-label="재료">
-      <button type="submit" class="primary">넣기</button>
+    <form class="madd${ed ? " editing" : ""}" id="mealAdd">
+      <select class="qzsel" id="mealSlot" aria-label="끼니">${SLOTS.map(t => `<option ${t === (ed ? ed.slot : "저녁") ? "selected" : ""}>${t}</option>`).join("")}</select>
+      <input class="field" id="mealMenu" placeholder="메뉴 (예: 삼겹살 구이)" aria-label="메뉴" value="${ed ? esc(ed.menu) : ""}">
+      <input class="field" id="mealIng" placeholder="재료를 쉼표로 (예: 삼겹살, 쌈채소, 쌈장)" aria-label="재료" value="${ed ? esc(ed.ing.join(", ")) : ""}">
+      <button type="submit" class="primary">${ed ? "고치기" : "넣기"}</button>${ed ? `<button type="button" class="ghost-btn mcancel">취소</button>` : ""}
     </form></div>`;
 }
 document.getElementById("meals").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
   if (b.classList.contains("mfold")){ toggleFold("meals"); return; }
-  if (b.classList.contains("mday")){ mealDay = Number(b.dataset.d); renderMeals(); return; }
-  if (b.classList.contains("mdel")){ delMeal(b.dataset.m); return; }
+  if (b.classList.contains("mday")){ mealDay = Number(b.dataset.d); mealEdit = null; renderMeals(); return; }
+  if (b.classList.contains("mdel")){ if (mealEdit === b.dataset.m) mealEdit = null; delMeal(b.dataset.m); return; }
+  if (b.classList.contains("medit")){
+    mealEdit = mealEdit === b.dataset.m ? null : b.dataset.m; renderMeals();
+    const mm = document.getElementById("mealMenu");
+    if (mealEdit && mm){ mm.scrollIntoView({block:"center", behavior:"smooth"}); mm.focus({preventScroll:true}); }
+    return;
+  }
+  if (b.classList.contains("mcancel")){ mealEdit = null; renderMeals(); return; }
 });
 document.getElementById("meals").addEventListener("submit", e => {
   e.preventDefault();
   const menu = document.getElementById("mealMenu").value.trim();
   if (!menu){ document.getElementById("mealMenu").focus(); return; }
   const slot = document.getElementById("mealSlot").value, ing = document.getElementById("mealIng").value;
+  if (mealEdit){
+    const id = mealEdit; mealEdit = null;
+    const r = editMeal(id, slot, menu, ing);
+    const parts = [r.added ? `${r.added}개 넣고` : "", r.removed ? `${r.removed}개 빼고` : ""].filter(Boolean);
+    toast(parts.length ? `식단을 고쳤어요. 먹거리에서 재료를 ${parts.join(" ").replace(/고$/, "")}었어요.`.replace("넣었어요", "넣었어요").replace("빼었어요", "뺐어요") : "식단을 고쳤어요.");
+    return;
+  }
   const added = addMeal(mealDay, slot, menu, ing);
   toast(added ? `재료 ${added}개를 먹거리에 넣었어요.` : "식단에 넣었어요. 재료는 이미 목록에 있어요.");
   const mm = document.getElementById("mealMenu"); if (mm) mm.focus();
