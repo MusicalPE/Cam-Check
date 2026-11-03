@@ -570,10 +570,33 @@ li.imp .txt{font-weight:800;color:var(--ink)}
 li.imp.on{background:transparent;box-shadow:none}
 li.imp.on .txt{font-weight:normal;color:var(--done)}
 li.imp.on .must{opacity:.4}
+/* 넓은 화면(노트북·PC·가로 태블릿): 왼쪽에 여행 정보, 오른쪽에 체크 목록 */
+.two,.side,.mainc{display:contents}
+@media (min-width:1100px){
+  .wrap{max-width:1480px}
+  .two{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}
+  .side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:16px;padding-bottom:4px;scrollbar-width:thin;overscroll-behavior:contain}
+  .mainc{display:flex;flex-direction:column;gap:20px;min-width:0}
+  .side header{grid-template-columns:1fr;padding:20px;gap:14px}
+  .side .logo{width:72px}
+  .side h1{font-size:27px;white-space:nowrap}
+  .side .brand{gap:14px}
+  .side .meter{text-align:left;display:grid;grid-template-columns:1fr auto;grid-template-areas:"num qr" "cap qr";align-items:center;column-gap:12px;padding:10px 14px}
+  .side .meter .num{grid-area:num}.side .meter .cap{grid-area:cap}.side .meter .qr-btn{grid-area:qr;margin:0}
+  .side .trip{grid-template-columns:1fr 1fr;grid-template-areas:"start nights" "place place" "wx wx"}
+  .side .trip:has(.t-trans){grid-template-areas:"start nights" "place trans" "wx wx"}
+  .side .acct{padding:10px 14px}
+  .side .zone.meals,.side .zone.plans{padding:16px}
+  .side .madd,.side .padd{grid-template-columns:auto 1fr}
+  .side .madd #mealIng,.side .padd #planMemo,.side .madd .primary,.side .padd .primary,.side .madd .ghost-btn,.side .padd .ghost-btn{grid-column:1/-1}
+  .mainc .grid{grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px}
+  .mainc .grid .zone{padding:16px 14px 14px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="two"><aside class="side">
   <header class="tabbed v-home">
     <div class="brand">
       <img class="logo" src="logo.png" width="400" height="400" alt="캠첵! Cam-Check 로고">
@@ -614,6 +637,7 @@ li.imp.on .must{opacity:.4}
     <div class="btns"><button class="go" id="installGo">앱으로 설치</button><button id="installLater">나중에</button></div>
   </div>
 
+  </aside><div class="mainc">
   <div class="phase tabbed v-home" id="phase" role="group" aria-label="체크 단계"><button data-ph="go" aria-pressed="true">출발 체크</button><button data-ph="back" aria-pressed="false">철수 체크</button></div>
   <p class="phase-hint tabbed v-home" id="phaseHint" hidden>출발 때 챙긴 것만 보여요(먹거리는 빼고). 다시 실을 때마다 체크하세요.</p>
   <div class="bar tabbed v-home" id="totalBar"><i></i></div>
@@ -636,6 +660,7 @@ li.imp.on .must{opacity:.4}
   <section class="zone meals tabbed v-meal" id="meals" aria-label="식단"></section>
   <main class="grid tabbed v-home" id="grid"></main>
   <div class="list-foot tabbed v-home"><span id="defaultBox"></span></div>
+  </div></div>
 
   <section class="log tabbed v-log" aria-labelledby="logTitle">
     <div>
@@ -1806,6 +1831,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"2.0.0", d:"2026. 11. 3.", items:["넓은 화면(노트북 · PC · 가로 태블릿)에서는 2단으로 보여요. 왼쪽에 출발일 · 날씨 · 식단, 오른쪽에 체크 목록이 바로 나와요.","식단을 연필 버튼으로 고칠 수 있어요."]},
   {v:"1.9.0", d:"2026. 10. 28.", items:["날씨 예보 표: 머무는 날마다 하늘 상태 · 비 확률 · 바람 세기 · 최저/최고 기온을 보여 주고, 비 · 강풍 · 영하인 날은 주황으로 알려 줘요.","위쪽 칸 배치를 바꿨어요(왼쪽 출발일 · 몇 박 · 캠핑장, 오른쪽 날씨)."]},
   {v:"1.8.0", d:"2026. 10. 28.", items:["날씨 예보: 카카오 검색으로 캠핑장을 고르면 머무는 날들의 최저 · 최고 기온을 예보로 채워 줘요(출발 2주 전부터).","철수 체크에서는 먹거리 구역을 빼고 보여요."]},
   {v:"1.7.0", d:"2026. 10. 28.", items:["식단: 날짜별 끼니에 메뉴와 재료를 적으면, 재료가 먹거리 구역에 저절로 들어가요.","예상 기온을 최저 · 최고로 나눠 적어요.","휴대폰 아래 메뉴를 기록 · 식단 · 체크 · 가족 · 설정 다섯 칸으로 나눴어요."]},
@@ -2298,6 +2324,17 @@ document.getElementById("wxDays").addEventListener("submit", async e => {
     save(); renderPlaceLinks(); loadWeather(true);
   }catch(err){ m.textContent = err.message; }
 });
+/* ---------- 넓은 화면 2단: 식단 칸을 왼쪽으로 옮김 ---------- */
+(function(){
+  const mq = matchMedia("(min-width:1100px)");
+  const place = () => {
+    const box = document.getElementById("meals"), side = document.querySelector(".side"), grid = document.getElementById("grid");
+    if (!box || !side || !grid) return;
+    if (mq.matches){ if (box.parentNode !== side) side.appendChild(box); }
+    else if (box.nextElementSibling !== grid) grid.parentNode.insertBefore(box, grid);
+  };
+  place(); (mq.addEventListener ? mq.addEventListener("change", place) : mq.addListener(place));
+})();
 </script>
 <script type="module" src="app-firebase.js"></script>
 </body>
