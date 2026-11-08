@@ -777,7 +777,7 @@ const DEFAULT_ZONES = [
     "화로대","화로대 받침(방염포)","장작","토치 · 라이터","내열 장갑","소화기 · 소화 스프레이"]},
   {key:"food", name:"먹거리", sub:"챙겨 갈 먹을 것 · 식단 재료", items:[
     "고기 · 해산물","즉석밥 · 쌀","라면","아침거리","양념 · 오일","커피 · 드립 도구","간식 · 음료"]},
-  {key:"shop", name:"장보기", sub:"가는 길에 마트에서 살 것", items:[]},
+  {key:"shop", name:"장보기", sub:"가기 전에 마트에서 살 것", items:[]},
   {key:"personal", name:"개인 · 위생", sub:"사람 챙기기", items:[
     "옷 여벌",["패딩 · 방한복","cold"],["털모자 · 장갑","cold"],["썬크림 · 모자","hot"],["모기 기피제 · 모기향","hot"],"세면도구","수건","슬리퍼 · 크록스","상비약","휴대폰 충전기"]},
   {key:"fun", name:"놀거리", sub:"쉬러 가는 거니까", items:[
@@ -812,11 +812,12 @@ function normalize(){
   if (!f.shop){
     if (!state.zones.some(z => z.id === "shop")){
       const fi = state.zones.findIndex(z => isFoodZone(z));
-      state.zones.splice(fi < 0 ? state.zones.length : fi + 1, 0, {id:"shop", name:"장보기", sub:"가는 길에 마트에서 살 것", g:[], items:[]});
+      state.zones.splice(fi < 0 ? state.zones.length : fi + 1, 0, {id:"shop", name:"장보기", sub:"가기 전에 마트에서 살 것", g:[], items:[]});
       const fz = state.zones[fi]; if (fz && fz.sub === "장보기 목록") fz.sub = "챙겨 갈 먹을 것 · 식단 재료";
     }
     changed = true;
   }
+  state.zones.forEach(z => { if (z.id === "shop" && z.sub === "가는 길에 " + "마트에서 살 것"){ z.sub = "가기 전에 마트에서 살 것"; changed = true; } });   // 잠깐 쓰던 설명 고침
   state.f = {hide: !!f.hide, shop: true};
   return changed;
 }
