@@ -829,8 +829,10 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":
 /* ---------- 저장소: 파이어베이스(가족 공간) 또는 이 기기 ----------
    파이어베이스 쪽 일은 아래 type="module" 스크립트가 맡고, window.REMOTE 로 연결됨 */
 const KEY = "campfb-checklist-v1", RKEY = "campfb-records-v1";
-function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
-function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+/* 미리보기(?demo)에서는 이 기기에 적어 둔 내 목록을 건드리지 않게 이 창 안에만 둠 */
+const DEMO = /[?&]demo(=|&|$)/.test(location.search), DEMO_LS = {};
+function lsGet(k){ if (DEMO) return k in DEMO_LS ? DEMO_LS[k] : null; try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ if (DEMO){ DEMO_LS[k] = String(v); return; } try{ localStorage.setItem(k,v); }catch(e){} }
 let REMOTE = null;            // 가족 공간에 들어가 있으면 {saveSettings, check, clearChecks, addRecord, deleteRecord}
 let FAMILY = null;            // {id, name, members:[{uid,name}], invite}
 const sortRecs = l => l.sort((a,b) => (b.date+b.saved).localeCompare(a.date+a.saved));
@@ -2376,6 +2378,6 @@ document.getElementById("wxDays").addEventListener("submit", async e => {
   place(); (mq.addEventListener ? mq.addEventListener("change", place) : mq.addListener(place));
 })();
 </script>
-<script type="module" src="app-firebase.js"></script>
+<script type="module">import(/[?&]demo(=|&|$)/.test(location.search) ? "./demo.js" : "./app-firebase.js");</script>
 </body>
 </html>
