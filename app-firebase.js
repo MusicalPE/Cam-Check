@@ -141,6 +141,12 @@ async function start(){
         catch(e){ if (k === 3) throw friendly(e); }
       }
     },
+    /* 의견 보내기: 로그인 안 해도 보낼 수 있음, 읽기는 막혀 있음 */
+    async sendFeedback(o){
+      const d = { text: String(o.text).slice(0, 1000), contact: String(o.contact || "").slice(0, 100), app: "cam", ver: String(o.ver || "").slice(0, 20), w: Number(o.w) || 0, createdAt: F.serverTimestamp() };
+      if (me) d.uid = me.uid;
+      await F.addDoc(F.collection(db, "feedback"), d);
+    },
     async getShare(code){
       const s = await F.getDoc(F.doc(db, "shares", code));
       return s.exists() ? s.data() : null;

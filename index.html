@@ -437,6 +437,13 @@ a.chip{text-decoration:none;display:inline-block}
 @media (max-width:560px){.sister{order:-1;margin-top:6px}}
 
 
+/* 의견 보내기 */
+.fb-help,.fb-note{word-break:keep-all}
+.fb-help{margin:0 0 10px;font-size:14px;color:var(--muted)}
+.fb-form{display:flex;flex-direction:column;gap:8px}
+.fb-form textarea{resize:vertical;min-height:110px;font:inherit;font-size:15px}
+.fb-note{margin:0;font-size:12px;color:var(--muted)}
+.fb-form .primary-chip{background:var(--forest);color:var(--on-forest);border-color:var(--forest)}
 /* 준비물 세팅 공유 · 업데이트 소식 */
 .share-card p{margin:0;font-size:14px;color:var(--muted);line-height:1.55}
 .share-card p b{color:var(--ink)}
@@ -732,12 +739,13 @@ li.imp.on .must{opacity:.4}
     <div class="set-row"><div><b>자매 앱 트립첵!</b><p>여행 준비물도 같은 방식으로 챙겨요.<br>로그인은 따로 한 번 해요.</p></div><a class="chip" href="https://musicalpe.github.io/Trip-Check/">열기</a></div>
     <div class="set-row"><div><b>준비물 세팅 공유</b><p>우리 목록을 짧은 주소와 QR로 보내요.<br>받은 사람은 더하거나 통째로 바꿀 수 있어요.</p></div><button class="chip" id="shareSet">보내기</button></div>
     <div class="set-row"><div><b>업데이트 소식 <span class="news-dot" hidden>새 소식</span></b><p id="newsVer"></p></div><button class="chip" id="newsSet">보기</button></div>
+    <div class="set-row"><div><b>의견 · 오류 보내기</b><p>불편한 점, 있었으면 하는 기능을 알려 주세요.</p></div><button class="chip" id="fbSet">보내기</button></div>
     <div class="set-row"><div><b>개인정보처리방침</b><p>어떤 정보를 어디에 두는지 알려 드려요.</p></div><a class="chip" href="privacy.html">보기</a></div>
     <div class="set-row"><div><b>앱으로 설치하기</b><p>홈 화면에 캠첵! 아이콘을 만들어요.</p></div><button class="chip" id="installSet">설치 방법</button></div>
   </section>
 
   <div class="conn-foot"><button class="link" id="installAny" hidden>앱으로 설치하기</button></div>
-  <footer id="foot" class="tabbed v-set"><span class="foot-links"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button><br></span>Made by 음악적체육인 · <a href="https://github.com/MusicalPE/Cam-Check/blob/main/LICENSE" target="_blank" rel="noopener">사용 조건</a></footer>
+  <footer id="foot" class="tabbed v-set"><span class="foot-links"><a href="privacy.html">개인정보처리방침</a> · <button class="link" id="acctManage">계정·자료 관리</button> · <button class="link" id="shareFoot">준비물 세팅 공유</button> · <button class="link" id="newsFoot">업데이트 소식<span class="news-dot" hidden>새 소식</span></button> · <button class="link" id="fbFoot">의견 보내기</button><br></span>Made by 음악적체육인 · <a href="https://github.com/MusicalPE/Cam-Check/blob/main/LICENSE" target="_blank" rel="noopener">사용 조건</a></footer>
 
   <div class="qr-modal" id="manage" hidden>
     <div class="qr-card mg-card" role="dialog" aria-modal="true" aria-labelledby="mgTitle">
@@ -757,6 +765,18 @@ li.imp.on .must{opacity:.4}
       <h3 id="shareTitle">준비물 세팅 공유</h3>
       <div id="shareBody"></div>
       <div class="row"><button class="chip" id="shareClose">닫기</button></div>
+    </div>
+  </div>
+  <div class="qr-modal" id="fbModal" hidden>
+    <div class="qr-card mg-card" role="dialog" aria-modal="true" aria-labelledby="fbTitle">
+      <h3 id="fbTitle">의견 · 오류 보내기</h3>
+      <p class="fb-help">불편한 점, 잘 안 되는 것, 있었으면 하는 기능을 자유롭게 적어 주세요. 만든 사람이 직접 읽어요.</p>
+      <form id="fbForm" class="fb-form">
+        <textarea class="field" id="fbText" rows="5" maxlength="1000" placeholder="예: 철수 체크에서 ○○가 안 보여요" aria-label="의견"></textarea>
+        <input class="field" id="fbContact" maxlength="100" placeholder="답장 받을 연락처(선택) · 이메일 등" aria-label="답장 받을 연락처(선택)">
+        <p class="fb-note">적은 글과 연락처(적은 경우), 앱 버전만 보내져요. 목록이나 기록은 보내지 않아요.</p>
+        <div class="row"><button type="button" class="chip" id="fbClose">닫기</button><button type="submit" class="chip primary-chip" id="fbSend">보내기</button></div>
+      </form>
     </div>
   </div>
   <div class="qr-modal" id="newsModal" hidden>
@@ -1903,6 +1923,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"2.3.0", d:"2026. 11. 13.", items:["의견 · 오류 보내기: 설정에서 불편한 점이나 바라는 기능을 바로 보낼 수 있어요. 로그인하지 않아도 돼요.","날씨 예보를 이 기기에 잠깐 두고 다시 써서 더 빨리 떠요."]},
   {v:"2.2.0", d:"2026. 11. 11.", items:["출력: 체크 목록 위 [출력]을 누르면 지금 보이는 목록(상황 설정 반영)을 A4 한 장에 맞춰 뽑아요. 식단과 메모 칸도 함께 들어가요."]},
   {v:"2.1.0", d:"2026. 11. 8.", items:["장보기 구역: 먹거리 아래에 '가기 전에 마트에서 살 것'을 적는 구역이 생겼어요.","휴대폰에서는 먹거리 · 장보기를 식단 탭에서 함께 보고 체크해요. 체크 탭에는 바로가기가 남아 있어요."]},
   {v:"2.0.0", d:"2026. 11. 3.", items:["넓은 화면(노트북 · PC · 가로 태블릿)에서는 2단으로 보여요. 왼쪽에 출발일 · 날씨 · 식단, 오른쪽에 체크 목록이 바로 나와요.","식단을 연필 버튼으로 고칠 수 있어요."]},
@@ -2111,6 +2132,30 @@ function openNews(){
   markNews();
   document.getElementById("newsClose").focus();
 }
+/* 의견 보내기: feedback 칸에 쓰기만 가능(읽기는 만든 사람이 파이어베이스 콘솔에서) */
+const fbEl = document.getElementById("fbModal"), FB_KEY = `${APP_ID}-fb-last`;
+function openFb(){ fbEl.hidden = false; setTimeout(() => document.getElementById("fbText").focus(), 30); }
+function closeFb(){ fbEl.hidden = true; }
+document.getElementById("fbSet").addEventListener("click", openFb);
+document.getElementById("fbFoot").addEventListener("click", openFb);
+document.getElementById("fbClose").addEventListener("click", closeFb);
+fbEl.addEventListener("click", e => { if (e.target === fbEl) closeFb(); });
+document.getElementById("fbForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const text = document.getElementById("fbText").value.trim(), contact = document.getElementById("fbContact").value.trim();
+  if (text.length < 2){ toast("내용을 적어 주세요."); document.getElementById("fbText").focus(); return; }
+  let last = 0; try{ last = +localStorage.getItem(FB_KEY) || 0; }catch(err){}
+  if (Date.now() - last < 60e3){ toast("조금 뒤에 다시 보내 주세요."); return; }
+  if (!window.FBAPP || !window.FBAPP.sendFeedback){ toast("지금은 보낼 수 없어요. 인터넷 연결을 확인해 주세요."); return; }
+  const btn = document.getElementById("fbSend"); btn.disabled = true; btn.textContent = "보내는 중…";
+  try{
+    await window.FBAPP.sendFeedback({text, contact, ver: NEWS[0].v, w: Math.round(window.innerWidth)});
+    try{ localStorage.setItem(FB_KEY, String(Date.now())); }catch(err){}
+    document.getElementById("fbText").value = ""; document.getElementById("fbContact").value = "";
+    closeFb(); toast("보내 주셔서 고마워요. 꼼꼼히 읽어 볼게요.");
+  }catch(err){ toast("보내지 못했어요. 잠시 뒤에 다시 해 주세요."); }
+  finally{ btn.disabled = false; btn.textContent = "보내기"; }
+});
 document.getElementById("newsSet").addEventListener("click", openNews);
 document.getElementById("newsFoot").addEventListener("click", openNews);
 document.getElementById("newsClose").addEventListener("click", () => { newsEl.hidden = true; });
@@ -2278,6 +2323,18 @@ let wxTimer = null, wxSeq = 0;
 const ymd = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
 function wxNote(html){ const el = document.getElementById("wxNote"); if (el) el.innerHTML = html || ""; }
 function canAuto(){ return true; }   // 기온은 늘 예보로 (지난 기록은 기록 고치기에서 손으로)
+/* 날씨 자료는 같은 장소면 3시간 동안 이 기기에 두고 다시 씀(다시 누르면 20분) — 무료 한도(하루 1만 번)를 아끼려고 */
+async function wxFetch(url, force){
+  const KEYC = `${APP_ID}-wx-cache`, now = Date.now(), maxAge = force ? 20 * 60e3 : 3 * 3600e3;
+  let c = {}; try{ c = JSON.parse(localStorage.getItem(KEYC) || "{}"); }catch(e){}
+  const hit = c[url]; if (hit && now - hit.at < maxAge) return hit.d;
+  const r = await fetch(url); if (!r.ok) throw new Error(r.status);
+  const d = await r.json();
+  Object.keys(c).forEach(k => { if (now - c[k].at > 6 * 3600e3) delete c[k]; });   // 오래된 것은 지움
+  c[url] = {at: now, d};
+  try{ localStorage.setItem(KEYC, JSON.stringify(c)); }catch(e){ try{ localStorage.setItem(KEYC, JSON.stringify({[url]: {at: now, d}})); }catch(e2){} }
+  return d;
+}
 async function loadWeather(force){
   const t = state.trip, p = t.pinfo, seq = ++wxSeq;
   if (!force && !canAuto()){ renderWx(); wxNote(`<button type="button" class="link" id="wxGo">예보로 채우기</button>`); return; }
@@ -2290,8 +2347,7 @@ async function loadWeather(force){
   try{
     // 날짜를 직접 지정하면 서버 시간대에 따라 범위 밖이라고 거절될 때가 있어, 16일치를 통째로 받고 여기서 고름
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${p.lat.toFixed(4)}&longitude=${p.lon.toFixed(4)}&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,precipitation_sum,wind_speed_10m_max,wind_gusts_10m_max&wind_speed_unit=ms&timezone=Asia%2FSeoul&forecast_days=16`;
-    const r = await fetch(url); if (!r.ok) throw new Error(r.status);
-    const d = await r.json(); if (seq !== wxSeq) return;
+    const d = await wxFetch(url, force); if (seq !== wxSeq) return;
     const from = ymd(st), to = ymd(en), D = d.daily || {};
     const idx = (D.time || []).map((x, i) => x >= from && x <= to ? i : -1).filter(i => i >= 0);
     if (!idx.length){ t.wx = []; t.temp = ""; t.tempHi = ""; t.tempAuto = true; fillTemps(); save(); renderWx(); wxNote(""); return; }

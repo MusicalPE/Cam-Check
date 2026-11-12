@@ -61,6 +61,18 @@ service cloud.firestore {
 
     // 준비물 세팅 공유: 짧은 코드를 아는 사람은 누구나 읽음(로그인 전에도), 만들기는 로그인한 사람만, 고치기·지우기는 만든 사람만
     // (목록 이름만 담기고 체크·가족·기록은 담기지 않음)
+    // 의견 보내기: 누구나 보낼 수 있고(로그인 전에도), 읽기·고치기는 막음 — 만든 사람은 파이어베이스 콘솔에서 읽음
+    match /feedback/{id} {
+      allow read, update, delete: if false;
+      allow create: if request.resource.data.keys().hasOnly(['text', 'contact', 'app', 'ver', 'w', 'uid', 'createdAt'])
+        && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 1000
+        && request.resource.data.contact is string && request.resource.data.contact.size() <= 100
+        && request.resource.data.ver is string && request.resource.data.ver.size() <= 20
+        && request.resource.data.w is number
+        && request.resource.data.createdAt == request.time
+        && (!('uid' in request.resource.data) || (request.auth != null && request.resource.data.uid == request.auth.uid));
+    }
+
     match /shares/{code} {
       allow get: if true;
       allow list: if false;
