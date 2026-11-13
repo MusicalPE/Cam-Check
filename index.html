@@ -746,6 +746,7 @@ li.imp.on .must{opacity:.4}
 
   <section class="pane tabbed v-set mobile-only" id="setTab" aria-labelledby="setTabTitle">
     <h2 id="setTabTitle">설정</h2>
+    <div class="set-row"><div><b>기록하면 식단 · 장보기도 비우기</b><p>캠핑을 기록할 때 체크와 함께 식단, 장보기 목록도 비워요.<br>끄면 다음 캠핑에도 그대로 남아요.</p></div><button class="chip" id="clearMealSet" aria-pressed="true">켜짐</button></div>
     <div class="set-row"><div><b>처음 목록으로 되돌리기</b><p>고친 구역·항목을 모두 처음 목록으로 바꿔요.</p></div><span id="defaultBox2"></span></div>
     <div class="set-row"><div><b>계정·자료 관리</b><p>기록 내려받기, 가족 공간에서 나가기, 계정 지우기</p></div><button class="chip" id="manageSet">열기</button></div>
     <div class="set-row"><div><b>자매 앱 트립첵!</b><p>여행 준비물도 같은 방식으로 챙겨요.<br>로그인은 따로 한 번 해요.</p></div><a class="chip" href="https://musicalpe.github.io/Trip-Check/">열기</a></div>
@@ -881,7 +882,7 @@ function normalize(){
     changed = true;
   }
   state.zones.forEach(z => { if (z.id === "shop" && z.sub === "가는 길에 " + "마트에서 살 것"){ z.sub = "가기 전에 마트에서 살 것"; changed = true; } });   // 잠깐 쓰던 설명 고침
-  state.f = {hide: !!f.hide, shop: true};
+  state.f = {hide: !!f.hide, shop: true, keepMeals: !!f.keepMeals};
   return changed;
 }
 const isFoodZone = z => z && (z.id === "food" || String(z.name).replace(/\s+/g, "") === "먹거리");
@@ -1057,6 +1058,7 @@ function closeQuick(){ quick = null; render(); }
 
 
 function render(){
+  if (typeof syncClearMeal === "function") syncClearMeal();
   const grid = document.getElementById("grid");
   grid.innerHTML = state.zones.map(zoneView).join("") + '<button class="zone-new" id="zoneNew">+ 구역 추가</button>';
   /* 휴대폰: 먹거리는 식단 탭에서 보이고, 체크 탭에는 바로가기만 */
@@ -1653,19 +1655,28 @@ document.getElementById("saveRec").addEventListener("click", () => {
     records = l; renderRecords();
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
     resetForNext();
-    msg.textContent = `${rec.date.replace(/-/g,".")} 기록을 ${REMOTE?"가족 공간에 ":""}남기고, 다음 캠핑 준비로 체크 · 메모 · 식단을 비웠어요.`;
+    msg.textContent = `${rec.date.replace(/-/g,".")} 기록을 ${REMOTE?"가족 공간에 ":""}남기고, 다음 캠핑 준비로 체크 · 메모${state.f.keepMeals ? "" : " · 식단 · 장보기"}를 비웠어요.`;
   }).catch(() => {
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
     msg.className = "msg err"; msg.textContent = "기록하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.";
   });
 });
+function syncClearMeal(){
+  const b = document.getElementById("clearMealSet"); if (!b) return;
+  const on = !(state.f && state.f.keepMeals); b.setAttribute("aria-pressed", on); b.textContent = on ? "켜짐" : "꺼짐";
+}
+document.getElementById("clearMealSet").addEventListener("click", () => {
+  state.f = state.f || {}; state.f.keepMeals = !state.f.keepMeals; save(); syncClearMeal();
+  toast(state.f.keepMeals ? "기록해도 식단 · 장보기는 남겨 둘게요." : "기록하면 식단 · 장보기도 비울게요.");
+});
 /* 기록을 남기면 다음 캠핑 준비로 바로 비움(기록에 다 남아 있음) — 잘못 눌렀으면 되돌리기 */
 function resetForNext(){
   const before = snapState(), keep = {memo:state.memo, trip:state.trip};
   state.memo = ""; state.trip = {};
-  state.meals = []; state.zones.forEach(z => { z.items = z.items.filter(i => !i.m); });   // 식단과 식단에서 들어온 재료도 비움
+  const withMeals = !state.f.keepMeals;   // 설정에서 끌 수 있음(처음엔 켜짐)
+  if (withMeals){ state.meals = []; state.zones.forEach(z => { z.items = isShopZone(z) ? [] : z.items.filter(i => !i.m); }); }   // 식단과 식단에서 들어온 재료, 장보기 칸 항목도 비움(구역은 남김)
   save(); clearChecks(); fillTrip(); render();
-  offerUndo("체크 · 메모 · 식단을 비웠어요.", before);
+  offerUndo(withMeals ? "체크 · 메모 · 식단 · 장보기를 비웠어요." : "체크 · 메모를 비웠어요.", before);
   const ub = document.querySelector("#undoBar button");
   if (ub){ const prev = ub.onclick; ub.onclick = () => { state.memo = keep.memo; state.trip = keep.trip; fillTrip(); prev(); }; }
   clearTimeout(undoTimer); undoTimer = setTimeout(() => { const u = document.getElementById("undoBar"); if (u) u.hidden = true; }, 15000);   // 기록 직후라 조금 더 길게
@@ -1953,6 +1964,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"2.6.0", d:"2026. 11. 13.", items:["기록하면 장보기 목록도 함께 비워져요(장보기 구역은 남아요).","설정 → [기록하면 식단 · 장보기도 비우기]를 끄면 식단과 장보기는 다음 캠핑에도 그대로 남아요."]},
   {v:"2.5.0", d:"2026. 11. 13.", items:["[이번 캠핑 기록하기]를 누르면 다음 캠핑 준비로 체크 · 메모 · 식단이 바로 비워져요. 잘못 눌렀으면 아래 [되돌리기]로 돌릴 수 있어요."]},
   {v:"2.4.0", d:"2026. 11. 13.", items:["휴대폰 · 태블릿에서는 [순서 편집]을 눌렀을 때만 항목 · 구역을 끌어서 옮길 수 있어요. 목록을 스크롤하다 항목이 움직이는 일이 없어요."]},
   {v:"2.3.0", d:"2026. 11. 13.", items:["의견 · 오류 보내기: 설정에서 불편한 점이나 바라는 기능을 바로 보낼 수 있어요. 로그인하지 않아도 돼요.","날씨 예보를 이 기기에 잠깐 두고 다시 써서 더 빨리 떠요."]},
