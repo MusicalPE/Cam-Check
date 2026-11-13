@@ -1,0 +1,11 @@
+{
+  "name": "app-tests",
+  "private": true,
+  "description": "올리기 전 시험용 라이브러리(글꼴·QR·끌어 옮기기). playwright 는 이 컴퓨터에 깔린 것을 씀",
+  "devDependencies": {
+    "@fontsource/do-hyeon": "^5.0.0",
+    "@fontsource/nanum-gothic": "^5.0.0",
+    "qrcode-generator": "1.4.4",
+    "sortablejs": "1.15.0"
+  }
+}

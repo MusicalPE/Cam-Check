@@ -1963,6 +1963,7 @@ setTab("home");   // 늘 체크 화면부터
 records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
+const APP_VER = "2.6.0";   // 판 번호 — sw.js 의 CACHE 끝 번호와 같게(tests/run.sh check 가 확인)
 const NEWS = [
   {v:"2.6.0", d:"2026. 11. 13.", items:["기록하면 장보기 목록도 함께 비워져요(장보기 구역은 남아요).","설정 → [기록하면 식단 · 장보기도 비우기]를 끄면 식단과 장보기는 다음 캠핑에도 그대로 남아요."]},
   {v:"2.5.0", d:"2026. 11. 13.", items:["[이번 캠핑 기록하기]를 누르면 다음 캠핑 준비로 체크 · 메모 · 식단이 바로 비워져요. 잘못 눌렀으면 아래 [되돌리기]로 돌릴 수 있어요."]},
@@ -2193,7 +2194,7 @@ document.getElementById("fbForm").addEventListener("submit", async e => {
   if (!window.FBAPP || !window.FBAPP.sendFeedback){ toast("지금은 보낼 수 없어요. 인터넷 연결을 확인해 주세요."); return; }
   const btn = document.getElementById("fbSend"); btn.disabled = true; btn.textContent = "보내는 중…";
   try{
-    await window.FBAPP.sendFeedback({text, contact, ver: NEWS[0].v, w: Math.round(window.innerWidth)});
+    await window.FBAPP.sendFeedback({text, contact, ver: APP_VER, w: Math.round(window.innerWidth)});
     try{ localStorage.setItem(FB_KEY, String(Date.now())); }catch(err){}
     document.getElementById("fbText").value = ""; document.getElementById("fbContact").value = "";
     closeFb(); toast("보내 주셔서 고마워요. 꼼꼼히 읽어 볼게요.");
@@ -2205,7 +2206,7 @@ document.getElementById("newsFoot").addEventListener("click", openNews);
 document.getElementById("newsClose").addEventListener("click", () => { newsEl.hidden = true; });
 newsEl.addEventListener("click", e => { if (e.target === newsEl) newsEl.hidden = true; });
 document.addEventListener("keydown", e => { if (e.key === "Escape" && !newsEl.hidden) newsEl.hidden = true; });
-document.getElementById("newsVer").textContent = "지금 " + NEWS[0].v;
+document.getElementById("newsVer").textContent = "지금 " + APP_VER;
 markNews();
 
 /* ---------- 되돌리기: 빼기·지우기·바꾸기 뒤 몇 초 동안 ---------- */
