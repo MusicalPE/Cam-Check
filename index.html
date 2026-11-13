@@ -1652,19 +1652,22 @@ document.getElementById("saveRec").addEventListener("click", () => {
     if (rec.placeId) setTimeout(() => publishRating(rec.placeId), 1500);
     records = l; renderRecords();
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
-    msg.innerHTML = `${esc(rec.date.replace(/-/g,"."))} 기록을 ${REMOTE?"가족 공간에 ":""}남겼어요. 다음 캠핑 준비로 비울까요?
-      <span class="confirm"><button class="yes" id="clearYes">체크·메모 비우기</button><button id="clearNo">그대로 두기</button></span>`;
+    resetForNext();
+    msg.textContent = `${rec.date.replace(/-/g,".")} 기록을 ${REMOTE?"가족 공간에 ":""}남기고, 다음 캠핑 준비로 체크 · 메모를 비웠어요.`;
   }).catch(() => {
     btn.disabled = false; btn.textContent = "이번 캠핑 기록하기";
     msg.className = "msg err"; msg.textContent = "기록하지 못했어요. 인터넷 연결을 확인하고 다시 눌러 주세요.";
   });
 });
-msg.addEventListener("click", e => {
-  if (e.target.id === "clearYes"){
-    state.memo = ""; state.trip = {}; save(); clearChecks(); fillTrip(); render();
-    msg.textContent = "비웠어요. 다음 캠핑도 즐겁게!";
-  } else if (e.target.id === "clearNo"){ msg.textContent = ""; }
-});
+/* 기록을 남기면 다음 캠핑 준비로 바로 비움(기록에 다 남아 있음) — 잘못 눌렀으면 되돌리기 */
+function resetForNext(){
+  const before = snapState(), keep = {memo:state.memo, trip:state.trip};
+  state.memo = ""; state.trip = {}; save(); clearChecks(); fillTrip(); render();
+  offerUndo("체크 · 메모를 비웠어요.", before);
+  const ub = document.querySelector("#undoBar button");
+  if (ub){ const prev = ub.onclick; ub.onclick = () => { state.memo = keep.memo; state.trip = keep.trip; fillTrip(); prev(); }; }
+  clearTimeout(undoTimer); undoTimer = setTimeout(() => { const u = document.getElementById("undoBar"); if (u) u.hidden = true; }, 15000);   // 기록 직후라 조금 더 길게
+}
 
 /* ---------- 불러오기 · 함께 쓰는 사람 변경 받아오기 ---------- */
 const hhmm = () => { const d = new Date(); return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0"); };
@@ -1948,6 +1951,7 @@ records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
 const NEWS = [
+  {v:"2.5.0", d:"2026. 11. 13.", items:["[이번 캠핑 기록하기]를 누르면 다음 캠핑 준비로 체크 · 메모가 바로 비워져요. 잘못 눌렀으면 아래 [되돌리기]로 돌릴 수 있어요."]},
   {v:"2.4.0", d:"2026. 11. 13.", items:["휴대폰 · 태블릿에서는 [순서 편집]을 눌렀을 때만 항목 · 구역을 끌어서 옮길 수 있어요. 목록을 스크롤하다 항목이 움직이는 일이 없어요."]},
   {v:"2.3.0", d:"2026. 11. 13.", items:["의견 · 오류 보내기: 설정에서 불편한 점이나 바라는 기능을 바로 보낼 수 있어요. 로그인하지 않아도 돼요.","날씨 예보를 이 기기에 잠깐 두고 다시 써서 더 빨리 떠요."]},
   {v:"2.2.0", d:"2026. 11. 11.", items:["출력: 체크 목록 위 [출력]을 누르면 지금 보이는 목록(상황 설정 반영)을 A4 한 장에 맞춰 뽑아요. 식단과 메모 칸도 함께 들어가요."]},
