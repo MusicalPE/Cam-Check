@@ -12,8 +12,8 @@ node check.mjs || { echo "== 코드 검사 실패: 올리지 마세요 =="; exit
 [ -d node_modules/sortablejs ] || npm install --silent --no-audit --no-fund >/dev/null 2>&1 || { echo "시험 준비(npm install) 실패"; exit 1; }
 mkdir -p out && cd out
 APP=$(grep -q "트립첵!</title>" ../../index.html && echo tripcheck || echo camping)
-if [ "$APP" = camping ]; then LIST="basic edit food_tab feedback_weather reorder keep_meals print print_long"
-else LIST="basic edit cost record_cost feedback_weather reorder keep_plans print print_long"; fi
+if [ "$APP" = camping ]; then LIST="basic edit food_tab feedback_weather reorder keep_meals help print print_long"
+else LIST="basic edit cost record_cost feedback_weather reorder keep_plans help print print_long"; fi
 fail=0; n=0
 for t in $LIST; do
   n=$((n+1))

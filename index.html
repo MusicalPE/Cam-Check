@@ -447,6 +447,27 @@ a.chip{text-decoration:none;display:inline-block}
 @media (max-width:560px){.sister{order:-1;margin-top:6px}}
 
 
+/* 사용 안내 (휘슬! · 리더스와 같은 방식) */
+.ccq-help{display:inline-flex;align-items:center;gap:6px;min-height:44px;border:0;background:none;padding:0 6px;font:inherit;font-size:14px;font-weight:700;color:var(--ink);cursor:pointer;border-radius:8px;text-decoration:none;white-space:nowrap}
+.ccq-help:hover{text-decoration:underline}
+.ccq-help:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.ccq-mark{width:20px;height:20px;border-radius:50%;background:var(--ink);color:var(--surface);font-size:13px;font-weight:900;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex:none}
+header{position:relative}
+.hdr-help{position:absolute;top:0;right:0;z-index:2}
+@media (min-width:561px){ header{padding-top:52px} .hdr-help{top:6px;right:10px} }
+.set-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.set-head h2{margin:0}
+.ccq-card{width:min(520px,100%);gap:0;padding:20px 20px 18px}
+.ccq-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.ccq-top h3{text-align:left}
+.ccq-card section{border-top:1px solid var(--line);padding:10px 0}
+.ccq-card section h4{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px;color:var(--ink);text-align:left}
+.ccq-num{width:24px;height:24px;border-radius:6px;background:var(--ink);color:var(--surface);font-size:14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;flex:none}
+.ccq-card ul{list-style:disc;margin:0;padding-left:20px;display:flex;flex-direction:column;gap:5px;text-align:left}
+.ccq-card li{display:list-item;padding:0;margin:0;border:0;min-height:0;background:none;box-shadow:none;font-size:14px;line-height:1.55;color:var(--ink);word-break:keep-all}
+.ccq-foot{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:12px}
+.ccq-foot .chip{text-align:center;text-decoration:none;min-height:44px;display:flex;align-items:center;justify-content:center}
+.ccq-foot .primary{min-height:46px}
 /* 의견 보내기 */
 .fb-help,.fb-note{word-break:keep-all}
 .fb-help{margin:0 0 10px;font-size:14px;color:var(--muted)}
@@ -603,7 +624,7 @@ li.imp.on .must{opacity:.4}
   .two{display:grid;grid-template-columns:340px minmax(0,1fr);gap:24px;align-items:start}
   .side{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto;display:flex;flex-direction:column;gap:16px;padding-bottom:4px;scrollbar-width:thin;overscroll-behavior:contain}
   .mainc{display:flex;flex-direction:column;gap:20px;min-width:0}
-  .side header{grid-template-columns:1fr;padding:20px;gap:14px}
+  .side header{grid-template-columns:1fr;padding:52px 20px 20px;gap:14px}
   .side .logo{width:72px}
   .side h1{font-size:27px;white-space:nowrap}
   .side .brand{gap:14px}
@@ -655,6 +676,7 @@ li.imp.on .must{opacity:.4}
 <div class="wrap">
   <div class="two"><aside class="side">
   <header class="tabbed v-home">
+    <button type="button" class="ccq-help hdr-help" data-ccq-help><span class="ccq-mark" aria-hidden="true">?</span>사용 안내</button>
     <div class="brand">
       <img class="logo" src="logo.png" width="400" height="400" alt="캠첵! Cam-Check 로고">
       <div class="brand-text">
@@ -745,7 +767,7 @@ li.imp.on .must{opacity:.4}
   </section>
 
   <section class="pane tabbed v-set mobile-only" id="setTab" aria-labelledby="setTabTitle">
-    <h2 id="setTabTitle">설정</h2>
+    <div class="set-head"><h2 id="setTabTitle">설정</h2><button type="button" class="ccq-help" data-ccq-help><span class="ccq-mark" aria-hidden="true">?</span>사용 안내</button></div>
     <div class="set-row"><div><b>기록하면 식단 · 장보기도 비우기</b><p>캠핑을 기록할 때 체크와 함께 식단, 장보기 목록도 비워요.<br>끄면 다음 캠핑에도 그대로 남아요.</p></div><button class="chip" id="clearMealSet" aria-pressed="true">켜짐</button></div>
     <div class="set-row"><div><b>처음 목록으로 되돌리기</b><p>고친 구역·항목을 모두 처음 목록으로 바꿔요.</p></div><span id="defaultBox2"></span></div>
     <div class="set-row"><div><b>계정·자료 관리</b><p>기록 내려받기, 가족 공간에서 나가기, 계정 지우기</p></div><button class="chip" id="manageSet">열기</button></div>
@@ -778,6 +800,13 @@ li.imp.on .must{opacity:.4}
       <h3 id="shareTitle">준비물 세팅 공유</h3>
       <div id="shareBody"></div>
       <div class="row"><button class="chip" id="shareClose">닫기</button></div>
+    </div>
+  </div>
+  <div class="qr-modal" id="helpModal" hidden>
+    <div class="qr-card mg-card ccq-card" role="dialog" aria-modal="true" aria-labelledby="helpTitle">
+      <div class="ccq-top"><h3 id="helpTitle">캠첵! 간략 사용법</h3><button type="button" class="chip" id="helpClose">닫기</button></div>
+      <div id="helpBody"></div>
+      <div class="ccq-foot"><a class="chip" id="helpDemo" href="?demo" target="_blank" rel="noopener">예시로 미리 눌러 보기</a><button type="button" class="primary" id="helpOk">확인</button></div>
     </div>
   </div>
   <div class="qr-modal" id="fbModal" hidden>
@@ -1963,8 +1992,9 @@ setTab("home");   // 늘 체크 화면부터
 records = local.getData().records; renderRecords();
 
 const APP_ID = "cam", APP_NAME = "캠첵!";
-const APP_VER = "2.6.0";   // 판 번호 — sw.js 의 CACHE 끝 번호와 같게(tests/run.sh check 가 확인)
+const APP_VER = "2.7.0";   // 판 번호 — sw.js 의 CACHE 끝 번호와 같게(tests/run.sh check 가 확인)
 const NEWS = [
+  {v:"2.7.0", d:"2026. 11. 20.", items:["사용 안내 추가"]},
   {v:"2.6.0", d:"2026. 11. 13.", items:["기록하면 장보기 목록도 함께 비워져요(장보기 구역은 남아요).","설정 → [기록하면 식단 · 장보기도 비우기]를 끄면 식단과 장보기는 다음 캠핑에도 그대로 남아요."]},
   {v:"2.5.0", d:"2026. 11. 13.", items:["[이번 캠핑 기록하기]를 누르면 다음 캠핑 준비로 체크 · 메모 · 식단이 바로 비워져요. 잘못 눌렀으면 아래 [되돌리기]로 돌릴 수 있어요."]},
   {v:"2.4.0", d:"2026. 11. 13.", items:["휴대폰 · 태블릿에서는 [순서 편집]을 눌렀을 때만 항목 · 구역을 끌어서 옮길 수 있어요. 목록을 스크롤하다 항목이 움직이는 일이 없어요."]},
@@ -2177,6 +2207,18 @@ function openNews(){
   markNews();
   document.getElementById("newsClose").focus();
 }
+/* 사용 안내: "? 사용 안내" 단추(첫 화면 위 오른쪽, 설정 맨 위) → 간략 사용법 창 */
+const HELP = [["출발일 · 캠핑장 · 날씨", ["\"출발일\"과 \"몇 박\"을 적습니다.", "\"캠핑장\"에 이름을 치면 찾아 주고, 고르면 그 날짜 날씨 예보가 나와요.", "비나 바람이 세면 날씨 표 아래에 미리 알려 줍니다."]], ["짐 챙기며 체크하기", ["\"출발 체크\"에서 챙긴 물건을 눌러 체크합니다. 위쪽 숫자에 챙긴 개수가 나와요.", "\"챙긴 것 숨기기\"를 켜면 아직 안 챙긴 것만 남습니다.", "\"출력\"을 누르면 지금 목록을 A4 한 장으로 뽑을 수 있어요."]], ["목록 고치기", ["구역마다 \"+ 항목 넣기\"에 적고 \"넣기\"를 누릅니다. 새 구역은 맨 아래 \"+ 구역 추가\"로 만들어요.", "항목 옆 연필을 누르면 이름, \"꼭 챙기기\", 상황, \"구역 옮기기\"를 고칠 수 있어요. 휴지통으로 지웁니다.", "순서는 왼쪽 손잡이를 끌어 바꿉니다. 휴대폰에서는 먼저 \"순서 편집\"을 눌러요."]], ["상황 설정", ["\"상황 설정\"에서 차박, 추울 때 같은 상황을 만들고 항목에 붙입니다.", "위쪽 상황 단추를 끄면 그 상황이 붙은 항목이 숨겨져요."]], ["식단 · 장보기", ["\"식단\"에서 끼니, 메뉴, 재료를 적고 \"넣기\"를 누릅니다. 재료는 먹거리 구역에 저절로 들어가요.", "마트에서 살 것은 \"장보기\" 구역에 적습니다. 휴대폰에서는 둘 다 \"식단\" 화면 아래에 있어요."]], ["철수 · 기록", ["철수할 때는 \"철수 체크\"로 바꿉니다. 출발 때 챙긴 것만 다시 확인해요.", "\"기록\"에서 별점과 한 줄 메모를 남기고 \"이번 캠핑 기록하기\"를 누르면 체크 · 메모 · 식단이 비워져 다음 캠핑을 준비합니다.", "식단 · 장보기를 남기고 싶으면 \"설정\"의 \"기록하면 식단 · 장보기도 비우기\"를 끕니다."]], ["가족과 함께 쓰기", ["\"가족\" 화면의 \"가족 공간 만들기\"에서 \"만들기\"를 누릅니다.", "\"가족 초대 QR\"을 가족 휴대폰으로 찍게 하면 같은 목록을 함께 씁니다. 한 사람이 체크하면 다른 가족 화면에도 바로 보여요.", "다른 집에 내 목록만 나눠 주려면 \"설정\"의 \"준비물 세팅 공유\"에서 \"보내기\"를 누릅니다."]], ["자주 묻는 것", ["지우거나 비운 바로 뒤에는 화면 아래 \"되돌리기\"를 누르면 돌아옵니다.", "가족 공간에 들어가 있으면 같은 구글 계정으로 다른 기기에서 열어도 그대로 나와요. 로그인하지 않으면 이 기기에만 저장됩니다.", "목록을 처음 상태로 돌리려면 \"설정\"의 \"처음 목록으로 되돌리기\"를 씁니다."]]];
+const helpEl = document.getElementById("helpModal"), IN_DEMO = /[?&]demo(=|&|$)/.test(location.search);
+document.getElementById("helpBody").innerHTML = HELP.map((h, i) => `<section><h4><span class="ccq-num">${i + 1}</span>${esc(h[0])}</h4><ul>${h[1].map(x => `<li>${esc(x)}</li>`).join("")}</ul></section>`).join("");
+document.getElementById("helpDemo").hidden = IN_DEMO;
+function openHelp(){ helpEl.hidden = false; helpEl.querySelector(".ccq-card").scrollTop = 0; setTimeout(() => document.getElementById("helpClose").focus(), 30); }
+function closeHelp(){ helpEl.hidden = true; }
+document.addEventListener("click", e => { if (e.target.closest("[data-ccq-help]")){ e.preventDefault(); openHelp(); } });
+document.getElementById("helpClose").addEventListener("click", closeHelp);
+document.getElementById("helpOk").addEventListener("click", closeHelp);
+helpEl.addEventListener("click", e => { if (e.target === helpEl) closeHelp(); });
+document.addEventListener("keydown", e => { if (e.key === "Escape" && !helpEl.hidden) closeHelp(); });
 /* 의견 보내기: feedback 칸에 쓰기만 가능(읽기는 만든 사람이 파이어베이스 콘솔에서) */
 const fbEl = document.getElementById("fbModal"), FB_KEY = `${APP_ID}-fb-last`;
 function openFb(){ fbEl.hidden = false; setTimeout(() => document.getElementById("fbText").focus(), 30); }
