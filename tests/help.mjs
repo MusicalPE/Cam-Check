@@ -60,15 +60,17 @@ const q = await newPage(390); await q.goto(PAGE + "?demo"); await q.waitForTimeo
 await q.click("header .ccq-help"); check(await q.locator("#helpDemo").isHidden(), "미리보기 안인데 예시 링크가 보임");
 // 컴퓨터: 머리 오른쪽 위
 const d = await newPage(1280, "light", false, 800); await d.goto(PAGE); await d.waitForTimeout(600);
-const db = await d.locator("header .ccq-help").boundingBox();
-const hb = await d.locator("header").boundingBox();
-check(db && db.height >= 44 && db.x + db.width <= hb.x + hb.width && db.y - hb.y < 20 && db.x > hb.x + hb.width / 2, "컴퓨터 첫 화면 단추 자리 이상");
+// PC(2단): 머리 단추는 숨고, "출발 체크" 줄 오른쪽 끝에 단추
+check(await d.locator("header .ccq-help").isHidden(), "PC인데 머리에도 단추가 보임");
+const db = await d.locator(".pc-help").boundingBox(), pb = await d.locator("#phase").boundingBox(), mb = await d.locator(".mainc").boundingBox();
+check(db && db.height >= 44 && Math.abs((db.y + db.height / 2) - (pb.y + pb.height / 2)) <= 3 && Math.abs((db.x + db.width) - (mb.x + mb.width)) <= 2, "PC 단추가 출발 체크 줄 오른쪽 끝에 없음: " + JSON.stringify({db, pb, mb}));
+await d.click(".pc-help"); await d.waitForTimeout(100); check(await d.locator("#helpModal").isVisible(), "PC 단추로 창이 안 열림"); await d.keyboard.press("Escape");
 await d.screenshot({path:`help_${app}_1280.png`, clip:{x:0,y:0,width:1280,height:360}});
-await d.click("header .ccq-help"); await d.waitForTimeout(150);
+await d.click(".pc-help"); await d.waitForTimeout(150);
 check(await d.locator("#helpBody section").count() === N, "컴퓨터에서 항목 수가 다름");
 await d.screenshot({path:`help_${app}_1280_open.png`});
 // 가운데 폭(태블릿 세로)
 const t = await newPage(820, "light", true, 1100); await t.goto(PAGE); await t.waitForTimeout(500);
-const tb = await t.locator("header .ccq-help").boundingBox(); check(tb && tb.height >= 44, "태블릿 단추 이상");
+const tb = await t.locator("header .ccq-help").boundingBox(); check(tb && tb.height >= 44, "태블릿 단추 이상"); check(await t.locator(".pc-help").isHidden(), "태블릿에 PC 단추가 보임");
 await t.screenshot({path:`help_${app}_820.png`, clip:{x:0,y:0,width:820,height:360}});
 console.log(problems.join("\n") || "문제 없음"); await b.close();
