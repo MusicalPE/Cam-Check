@@ -58,7 +58,7 @@ check((await p.locator(".talk-open .tko-lang").textContent()).includes("일본�
 await p.click(".talk-open"); await p.waitForTimeout(200);
 check(await p.locator("#talk").isVisible(), "여행 회화 창이 안 열림");
 check(await p.inputValue("#talkLang") === "ja", "언어 자동 선택 안 됨");
-check(await p.locator("#talkTabs button").count() === 7, "상황 탭 수가 다름");
+check(await p.locator("#talkTabs button").count() === 8, "상황 탭 수가 다름");
 check(await p.locator("#talkBody .tk-card").count() === 6, "공항 문장 수가 다름");
 await p.click('#talkTabs button[data-sc="2"]'); await p.waitForTimeout(100);
 check(await p.locator("#talkBody .tk-card").count() === 7, "식당 문장 수가 다름");
@@ -132,6 +132,36 @@ check(await p.evaluate(() => document.documentElement.scrollWidth <= innerWidth 
 await p.evaluate(() => { state.trip.place = "다낭"; save(); render(); }); await p.click(".talk-open");
 check(await p.inputValue("#talkLang") === "vi", "다낭인데 베트남어가 아님");
 check(await p.evaluate(() => { const b = document.getElementById("talkBody"); return b.scrollWidth <= b.clientWidth + 1; }), "회화 창이 옆으로 넘침");
+await p.click("#talkBack");
+// 내 문장: 넣기(번역기 주소), 언어별로 따로, 고치기, 지우기·되돌리기, 문장 만들기에서 저장, 가족 공간 저장 대상
+await p.click(".talk-open"); await p.selectOption("#talkLang", "ja");
+await p.click('#talkTabs button[data-sc="mine"]'); await p.waitForTimeout(80);
+check(await p.locator(".tk-empty").isVisible(), "내 문장이 비었을 때 안내가 없음");
+await p.click('[data-tkmine="new"]'); await p.fill("#tkKo", "아이 의자 있어요?");
+const pap = await p.getAttribute("#tkPapago", "href");
+check(pap === "https://papago.naver.com/?sk=ko&tk=ja&st=" + encodeURIComponent("아이 의자 있어요?"), "파파고 주소가 다름: " + pap);
+check((await p.getAttribute("#tkGoogle", "href")).includes("tl=ja&text="), "구글 번역 주소가 다름");
+await p.click('[data-tkmine="save"]'); check(await p.locator("#tkAdd").isVisible(), "번역 없이 저장됨");
+await p.fill("#tkFx", "子ども用の椅子はありますか？"); await p.fill("#tkRd", "코도모요-노 이스와 아리마스카"); await p.click('[data-tkmine="save"]'); await p.waitForTimeout(80);
+check(await p.locator("#talkBody .tk-card").count() === 1, "내 문장이 안 들어감");
+await p.click('#talkBody [data-tkm="0"]'); await p.click('.tk-card.open [data-tkact="say"]');
+check(await p.evaluate(() => window.__spoken.at(-1).t === "子ども用の椅子はありますか？"), "내 문장 소리 듣기 내용이 다름");
+await p.click('.tk-card.open [data-tkact="show"]'); check(await p.locator("#talkBig").textContent() === "子ども用の椅子はありますか？", "내 문장 보여 주기가 다름"); await p.click("#talkShowClose");
+await p.click('[data-tkmine="edit"]'); await p.fill("#tkKo", "아기 의자 있어요?"); await p.click('[data-tkmine="save"]'); await p.waitForTimeout(60);
+check((await p.locator("#talkBody .tk-card b").first().textContent()) === "아기 의자 있어요?", "내 문장 고치기 안 됨");
+await p.screenshot({path:"talk_mine.png"});
+await p.selectOption("#talkLang", "en"); check(await p.locator("#talkBody .tk-card").count() === 0, "다른 언어에도 내 문장이 보임");
+await p.selectOption("#talkLang", "ja");
+await p.click('#talkBody [data-tkm="0"]'); await p.click('[data-tkmine="del"]'); await p.waitForTimeout(60);
+check(await p.locator("#talkBody .tk-card").count() === 0, "내 문장 지우기 안 됨");
+check(await p.locator("#undoBar").isVisible(), "되돌리기 단추가 회화 창에 가려짐");
+await p.click("#undoBar button"); await p.waitForTimeout(80);
+check(await p.locator("#talkBody .tk-card").count() === 1, "내 문장 되돌리기 안 됨");
+await p.click('#talkTabs button[data-sc="make"]'); await p.click('[data-tkt="0"]'); await p.click('[data-tkw="1"]'); await p.click('[data-tkact="keep"]');
+await p.click('[data-tkact="keep"]');
+check(await p.evaluate(() => state.talk.filter(x => x.lang === "ja").length) === 2, "문장 만들기에서 저장이 안 되거나 두 번 들어감");
+check(await p.evaluate(() => JSON.parse(localStorage.getItem(KEY) || "{}").talk.length === 2), "내 문장이 이 기기에 저장 안 됨");
+check(await p.evaluate(() => typeof settingsObj !== "function" || Array.isArray(settingsObj().talk)), "내 문장이 가족 공간 저장 대상에 없음");
 await p.click("#talkBack");
 // 예전 자료 파일이 남아 있어도(대답 자료 없음) 보여 주기는 열려야 함
 const o = await newPage(390, "light", true);
