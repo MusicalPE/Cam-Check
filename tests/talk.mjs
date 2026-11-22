@@ -74,11 +74,11 @@ check(await p.locator("#talkShow").isVisible(), "보여 주기가 안 열림");
 check(await p.evaluate(() => getComputedStyle(document.querySelector(".tk-them")).transform.startsWith("matrix(-1")), "상대 쪽이 뒤집히지 않음");
 check(await p.locator("#talkBig").textContent() === "お会計お願いします。", "보여 주기 글자가 다름");
 // 상대가 눌러 주는 대답
-check(await p.locator("#talkAnsBtns [data-ans]").count() === 8, "대답 단추 수가 다름");
+check(await p.locator("#talkAnsBtns [data-ans]").count() === 6 && await p.locator('#talkAnsBtns [data-ans="have"]').count() === 0, "계산해 주세요에 맞지 않는 대답 단추가 뜸");
 check(await p.locator("#talkAsk").textContent() === "答えを押してください", "상대 쪽 안내가 일본어가 아님");
 check(await p.locator("#talkReply").isHidden(), "대답 전인데 답 칸이 보임");
-await p.click('#talkAnsBtns [data-ans="have"]'); await p.waitForTimeout(80);
-check(await p.locator("#talkReplyKo").textContent() === "있어요" && await p.locator("#talkReplyFx").textContent() === "あります", "대답이 한국어로 안 나옴");
+await p.click('#talkAnsBtns [data-ans="ok"]'); await p.waitForTimeout(80);
+check(await p.locator("#talkReplyKo").textContent() === "돼요 · 괜찮아요" && await p.locator("#talkReplyFx").textContent() === "大丈夫です", "대답이 한국어로 안 나옴");
 check(await p.evaluate(() => { const t = document.querySelector(".tk-them"); return t.scrollHeight <= t.clientHeight + 1; }), "상대 쪽 대답 단추가 절반 화면을 넘침");
 await p.screenshot({path:"talk_show.png"});
 await p.keyboard.press("Escape"); await p.waitForTimeout(100);
@@ -152,6 +152,23 @@ check((await p.locator("#talkBody .tk-card b").first().textContent()) === "아�
 await p.screenshot({path:"talk_mine.png"});
 await p.selectOption("#talkLang", "en"); check(await p.locator("#talkBody .tk-card").count() === 0, "다른 언어에도 내 문장이 보임");
 await p.selectOption("#talkLang", "ja");
+// 대답 종류: 저절로 고르기(있어요? → 있어요·없어요), 길 안내 문장, 대답 단추 없이
+await p.click('#talkBody [data-tkm="0"]'); await p.click('.tk-card.open [data-tkact="show"]');
+check(await p.locator('#talkAnsBtns [data-ans="have"]').count() === 1, "있어요? 문장에 있어요 단추가 없음"); await p.click("#talkShowClose");
+await p.click('[data-tkmine="new"]'); await p.fill("#tkKo", "캄란에 가고 싶어요");
+check((await p.locator("#tkAnsGuess").textContent()).includes("길 안내"), "가고 싶어요를 길 안내로 못 고름");
+await p.fill("#tkFx", "Tôi muốn đi Cam Ranh."); await p.click('[data-tkmine="save"]'); await p.waitForTimeout(60);
+await p.click('#talkBody [data-tkm="1"]'); await p.click('.tk-card.open [data-tkact="show"]');
+check(await p.locator('#talkAnsBtns [data-ans="far"]').count() === 1 && await p.locator('#talkAnsBtns [data-ans="have"]').count() === 0, "가고 싶어요에 길 안내 대답이 안 뜸");
+check(await p.evaluate(() => { const t = document.querySelector(".tk-them"); return t.scrollHeight <= t.clientHeight + 1; }), "길 안내 대답 단추가 절반 화면을 넘침");
+await p.screenshot({path:"talk_dir.png"});
+await p.click("#talkShowClose");
+await p.click('[data-tkmine="edit"]'); await p.selectOption("#tkAns", "none"); await p.click('[data-tkmine="save"]'); await p.waitForTimeout(60);
+await p.click('#talkBody [data-tkm="1"]'); await p.click('.tk-card.open [data-tkact="show"]');
+check(await p.locator("#talkAnsBtns button").count() === 0 && await p.locator("#talkShow").isVisible(), "대답 단추 없이가 안 됨");
+await p.click("#talkShowClose");
+await p.evaluate(() => { state.talk = state.talk.filter(x => !/캄란/.test(x.ko)); save(); });
+await p.click('#talkTabs button[data-sc="mine"]');
 await p.click('#talkBody [data-tkm="0"]'); await p.click('[data-tkmine="del"]'); await p.waitForTimeout(60);
 check(await p.locator("#talkBody .tk-card").count() === 0, "내 문장 지우기 안 됨");
 check(await p.locator("#undoBar").isVisible(), "되돌리기 단추가 회화 창에 가려짐");
