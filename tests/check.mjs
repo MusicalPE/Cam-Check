@@ -65,6 +65,8 @@ const cmp = (a, b) => { const x = a.split(".").map(Number), y = b.split(".").map
 if (!appVer) problems.push("index.html 에 APP_VER 가 없음");
 if (!swVer) problems.push("sw.js 캐시 이름에서 판 번호를 못 찾음");
 if (appVer && swVer && appVer !== swVer) problems.push(`판 번호가 다름: index.html ${appVer}, sw.js ${swVer}`);
+// 앱 안 자료 파일(.js?v=)의 판 번호도 같아야 업데이트 때 새 파일을 받음
+[...html.matchAll(/<script[^>]+src="(?!https?:)([\w./-]+\.js)\?v=([\d.]+)"/g)].forEach(m => { if (appVer && m[2] !== appVer) problems.push(`${m[1]}?v=${m[2]} 판 번호가 앱(${appVer})과 다름`); });
 if (appVer && newsVer){
   if (cmp(newsVer, appVer) > 0) problems.push(`업데이트 소식(${newsVer})이 앱 판 번호(${appVer})보다 높음`);
   else if (mm(newsVer) !== mm(appVer)) notes.push(`참고: 기능 판 번호는 ${appVer}인데 업데이트 소식 최신은 ${newsVer} (굵직한 기능이면 소식 적기)`);

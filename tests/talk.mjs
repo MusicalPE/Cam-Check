@@ -133,6 +133,13 @@ await p.evaluate(() => { state.trip.place = "다낭"; save(); render(); }); awai
 check(await p.inputValue("#talkLang") === "vi", "다낭인데 베트남어가 아님");
 check(await p.evaluate(() => { const b = document.getElementById("talkBody"); return b.scrollWidth <= b.clientWidth + 1; }), "회화 창이 옆으로 넘침");
 await p.click("#talkBack");
+// 예전 자료 파일이 남아 있어도(대답 자료 없음) 보여 주기는 열려야 함
+const o = await newPage(390, "light", true);
+await o.route(/talk-data\.js/, async r => { const res = await r.fetch().catch(() => null); let body = fs.readFileSync(ROOT + "talk-data.js", "utf8").replace(/\n  answers: \{[\s\S]*?\n  \},\n  answerSets: \{[\s\S]*?\n  \},\n  \/\* 상대 쪽 안내 글 \*\/\n  ask: \{[\s\S]*?\n  \},\n/, "\n"); r.fulfill({contentType:"text/javascript", body}); });
+await o.goto(PAGE); await o.waitForTimeout(600);
+check(await o.evaluate(() => !window.TALK.answerSets), "예전 자료 흉내가 안 됨");
+await o.click('.tabbar button[data-tab="plan"]'); await o.click(".talk-open"); await o.click('#talkBody [data-tki="0"]'); await o.click('.tk-card.open [data-tkact="show"]'); await o.waitForTimeout(150);
+check(await o.locator("#talkShow").isVisible(), "예전 자료일 때 보여 주기가 안 열림");
 // 컴퓨터: 가운데 좁은 창
 const d = await newPage(1280, "light", false, 800); await d.goto(PAGE); await d.waitForTimeout(600);
 await d.click(".talk-open"); const tb = await d.locator("#talk").boundingBox();
