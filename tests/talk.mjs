@@ -73,9 +73,25 @@ await p.click('.tk-card.open [data-tkact="show"]'); await p.waitForTimeout(150);
 check(await p.locator("#talkShow").isVisible(), "보여 주기가 안 열림");
 check(await p.evaluate(() => getComputedStyle(document.querySelector(".tk-them")).transform.startsWith("matrix(-1")), "상대 쪽이 뒤집히지 않음");
 check(await p.locator("#talkBig").textContent() === "お会計お願いします。", "보여 주기 글자가 다름");
+// 상대가 눌러 주는 대답
+check(await p.locator("#talkAnsBtns [data-ans]").count() === 8, "대답 단추 수가 다름");
+check(await p.locator("#talkAsk").textContent() === "答えを押してください", "상대 쪽 안내가 일본어가 아님");
+check(await p.locator("#talkReply").isHidden(), "대답 전인데 답 칸이 보임");
+await p.click('#talkAnsBtns [data-ans="have"]'); await p.waitForTimeout(80);
+check(await p.locator("#talkReplyKo").textContent() === "있어요" && await p.locator("#talkReplyFx").textContent() === "あります", "대답이 한국어로 안 나옴");
+check(await p.evaluate(() => { const t = document.querySelector(".tk-them"); return t.scrollHeight <= t.clientHeight + 1; }), "상대 쪽 대답 단추가 절반 화면을 넘침");
 await p.screenshot({path:"talk_show.png"});
 await p.keyboard.press("Escape"); await p.waitForTimeout(100);
 check(await p.locator("#talkShow").isHidden() && await p.locator("#talk").isVisible(), "Esc 한 번에 보여 주기만 닫혀야 함");
+// 값 묻기: 숫자판
+await p.click('#talkTabs button[data-sc="4"]'); await p.click('#talkBody [data-tki="0"]'); await p.click('.tk-card.open [data-tkact="show"]'); await p.waitForTimeout(100);
+check(await p.locator("#talkAnsBtns [data-key]").count() === 12, "얼마예요에 숫자판이 없음");
+for (const k of ["1","2","0","0"]) await p.click(`#talkAnsBtns [data-key="${k}"]`);
+check(await p.locator("#talkReplyKo").textContent() === "1,200", "적은 금액이 내 쪽에 안 나옴");
+await p.click('#talkAnsBtns [data-key="⌫"]'); check(await p.locator("#talkReplyKo").textContent() === "120", "지우기 안 됨");
+check(await p.evaluate(() => { const t = document.querySelector(".tk-them"); return t.scrollHeight <= t.clientHeight + 1; }), "숫자판이 절반 화면을 넘침");
+await p.screenshot({path:"talk_num.png"});
+await p.click("#talkShowClose");
 // 문장 만들기
 await p.click('#talkTabs button[data-sc="make"]'); await p.waitForTimeout(100);
 const build = async (lang, t, w, n) => {
@@ -91,6 +107,11 @@ const exp = [
   ["ja",0,1,0,"ビールをください。"], ["en",2,1,0,"Do you have beer?"], ["fr",5,1,0,"Sans glaçons, s'il vous plaît."], ["zh",4,0,0,"这个多少钱？"]
 ];
 for (const [l, t, w, n, want] of exp){ const got = await build(l, t, w, n); check(got === want, `문장 만들기 ${l}: "${got}" ≠ "${want}"`); }
+// 길 묻기: 방향 대답(프랑스어)
+await p.selectOption("#talkLang", "fr"); await p.click('[data-tkt="3"]'); await p.click('[data-tkw="1"]'); await p.click('[data-tkact="show"]'); await p.waitForTimeout(80);
+await p.click('#talkAnsBtns [data-ans="right"]');
+check(await p.locator("#talkReplyKo").textContent() === "오른쪽이에요" && await p.locator("#talkReplyFx").textContent() === "À droite", "길 대답이 다름");
+await p.click("#talkShowClose");
 // 태국어 여자 말끝
 await p.selectOption("#talkLang", "th"); await p.click('#talkTh [data-g="f"]'); await p.click('[data-tkt="1"]'); await p.click('[data-tkw="1"]'); await p.click('[data-tkn="2"]');
 check((await p.locator(".tk-out .tk-fx").textContent()).trim() === "ขอเบียร์ สอง ขวดค่ะ", "태국어 여자 말끝이 안 바뀜");
